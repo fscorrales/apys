@@ -1,6 +1,7 @@
 # %%
 import json
 import requests
+import pandas as pd
 from datetime import datetime as dt
 
 from Exceptions import APIException
@@ -150,6 +151,24 @@ class Finnhub:
         params = {"symbol":symbol}
         return self._get("/stock/recommendation", params=params)
 
+    def recomendation_rank(self, symbol):
+        data = self.recommendation_trends(symbol)
+        df = pd.DataFrame(data)
+        df['period'] = pd.to_datetime(df.period)
+        df.set_index('period', inplace=True)
+        df.drop(['symbol'], axis=1, inplace=True)
+        weights = [2, 1, -1, 3, -2]
+        points = df.mul(weights, axis=1).sum(axis=1)
+        n = df.sum(axis=1)
+        mean_points = points / n
+        summary = pd.concat([points, n, mean_points], axis=1)
+        summary.columns = ['points', 'n', 'mean_points']
+        summary = summary.sort_values('period', ascending=True)
+        init = float(summary[0:1]['mean_points'])
+        summary["idx100"] = 100 * summary['mean_points']/init
+        self.data = summary
+        return self.data
+
     def eps_surprises(self, symbol, limit=None):
         params = {"symbol": symbol, "limit": limit}
         return self._get("/stock/earnings", params=params)
@@ -243,3 +262,5 @@ class Finnhub:
     #ECONOMIC
     def country(self):
         return self._get("/country")
+
+# %%
