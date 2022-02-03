@@ -184,11 +184,12 @@ class Finnhub:
         return self._get("/quote", params=params)
 
     def stock_candles(self, symbol, from_date, to_date, 
-    resolution = "D", subset = None):
+    resolution = "D", adj = True, subset = None):
         from_date = dt.timestamp(dt.strptime(from_date, '%Y-%m-%d'))
         to_date = dt.timestamp(dt.strptime(to_date, '%Y-%m-%d'))
         params = {"symbol":symbol, "resolution":resolution,
-                "from":int(from_date), "to":int(to_date)}
+                "from":int(from_date), "to":int(to_date),
+                "adjusted":adj}
         return self._get("/stock/candle", 
         subset = subset, params=params)
 
