@@ -66,8 +66,7 @@ class DefiLlama:
         return self._request("post", path, **kwargs)
 
     #GET GENERIC FUNCTION
-    def get_generic(self, endpoint = "", 
-    subset = None, **params):
+    def get_generic(self, endpoint = "", **params):
         return self._get(endpoint, params=params)
 
     #TVL
