@@ -1,2 +1,5 @@
 {
+    "jupyter.jupyterServerType": "local",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs":"active"
 }
