@@ -1,4 +1,3 @@
-# %%
 import json
 import requests
 import pandas as pd
@@ -126,5 +125,3 @@ class IOL:
         else:
             self.data = data
         return self.data
-    
-# %%

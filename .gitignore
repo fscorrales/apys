@@ -30,7 +30,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 jupyter
-apys_venv
+
+# json files and config.py (passwords)
+*.json
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -118,6 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+*_venv
 .env
 .venv
 env/
