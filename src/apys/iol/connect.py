@@ -1,26 +1,34 @@
-import json
-import requests
-import pandas as pd
 import datetime as dt
+from dataclasses import dataclass, field
+
+import requests
+
+from ..general_requests import APIRequests
 
 #API DOC: https://api.invertironline.com/
 
-class IOL:
-    API_URL = "https://api.invertironline.com"
-    DEFAULT_TIMEOUT = 10
-    _username = None
-    _password = None
-    token = {}
+@dataclass
+class IOL(APIRequests):
+    _username: str = ''
+    _password: str = ''
+    access_token: str = ''
+    datetime_expires: str = ''
+    token: dict = field(
+        default_factory=dict, 
+        init=False, repr=False)
+    API_URL: str = field(
+        default="https://api.invertironline.com", 
+        init=False, repr=False)
+    DEFAULT_TIMEOUT: int = field(
+        default=10, 
+        init=False, repr=False)
 
-    def __init__(self, iol_username, iol_password,
-    token = '', token_expires = ''):
-        self._username = iol_username
-        self._password = iol_password
-        if token == '' or token_expires == '':
+    def __post_init__(self):
+        if self.access_token == '' or self.datetime_expires == '':
             self.get_token()
         else:
-            self.token['access_token'] = token
-            self.token['.expires'] = token_expires
+            self.token['access_token'] = self.access_token
+            self.token['.expires'] = self.datetime_expires       
 
     def get_token(self):
         url = self.API_URL + "/token"
@@ -52,46 +60,6 @@ class IOL:
             self.token = self.get_token()
             return (f"Token has been updated. Expires in {self.token['.expires']}")
 
-    def _request(self, method, path, headers, **kwargs):
-        uri = "{}/{}".format(self.API_URL, path)
-        kwargs["headers"] = headers
-        kwargs["timeout"] = kwargs.get("timeout", self.DEFAULT_TIMEOUT)
-        kwargs["params"] = self._format_params(kwargs.get("params", {}))
-
-        response = getattr(requests, method)(uri, **kwargs)
-        return self._handle_response(response)
-        #return response.json()[subset]
-
-    # def _handle_response(self, response):
-    #     if not response.ok:
-    #         raise APIException(response)
-    #     try:
-    #         content_type = response.headers.get('Content-Type', '')
-    #         if 'application/json' in content_type:
-    #             return response.json()
-    #         if 'text/csv' in content_type:
-    #             return response.text
-    #         if 'text/plain' in content_type:
-    #             return response.text
-    #         raise APIRequestException("Invalid Response: {}".format(response.text))
-    #     except ValueError:
-    #         raise APIRequestException("Invalid Response: {}".format(response.text))
-
-    # @staticmethod
-    # def _format_params(params):
-    #     return {k: json.dumps(v) if isinstance(v, bool) else v for k, v in params.items()}
-    
-    # def _get(self, path = None, headers = None,**kwargs):
-    #     return self._request("get", path, headers, **kwargs)
-
-    # @property
-    # def api_key(self):
-    #     return self._session.params.get("token")
-
-    # @api_key.setter
-    # def api_key(self, api_key):
-    #     self._session.params["token"] = api_key
-
     #GET GENERIC FUNCTION
     def get_generic(self, endpoint = "", **params):
-        return self._get(endpoint, params=params)
+        return self.get(endpoint, params=params)
