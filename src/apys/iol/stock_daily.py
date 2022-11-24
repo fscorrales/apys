@@ -13,6 +13,8 @@ import sys
 from dataclasses import dataclass, field
 
 import pandas as pd
+#from datar.tibble import as_tibble
+from ..utils.pydyverse import Tibble
 import requests
 
 from ..utils.validation import valid_date
@@ -63,7 +65,8 @@ class StockDaily:
         self.response = self.iol.get(URL, headers = h)
         # As precaution if someone wants to use this method
         # without transforming response to DataFrame
-        self.df = pd.DataFrame() 
+        self.df = pd.DataFrame()
+        return self.response 
 
     def to_dataframe(self):
         """Transform response to Pandas DataFrame"""
@@ -75,6 +78,14 @@ class StockDaily:
         "puntas", "q_operaciones", "descripcion", "plazo", "min_lamina", "lote"]
             
         self.df = df
+        return self.df
+
+    def to_tibble(self):
+        """Transform Pandas DataFrame to a tidyverse proxy"""
+        if len(self.df) == 0:
+            self.to_dataframe()
+        self.df = Tibble(self.df)
+        return self.df
 
 # --------------------------------------------------
 def get_args():
@@ -175,6 +186,9 @@ def main():
         market = args.market,
         adjusted = args.adjusted
     )
+    print(test.df)
+    test.to_tibble()
+    print(test.df)
 
     # json_file created with credentials
     if args.json_file:
@@ -188,10 +202,8 @@ def main():
             json.dump(data_json, json_file)
         json_file.close()
 
-    print(test.df.head(5))
-
 # --------------------------------------------------
 if __name__ == '__main__':
     main()
     # From apys.src
-    #python -m apys.iol.stock_daily GGAL 01-10-2022
+    #python -m apys.iol.stock_daily GGAL 01-10-2022 -j True
