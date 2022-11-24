@@ -57,8 +57,8 @@ class IOL(APIRequests):
         if days == 0:
             return self.token
         else:
-            self.token = self.get_token()
-            return (f"Token has been updated. Expires in {self.token['.expires']}")
+            self.get_token()
+            print(f"Token has been updated. Expires in {self.token['.expires']}")
 
     #GET GENERIC FUNCTION
     def get_generic(self, endpoint = "", **params):
