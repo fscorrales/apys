@@ -6,17 +6,16 @@ Purpose: Get daily stock data from IOL
 
 import argparse
 import datetime as dt
-import json
 import inspect
+import json
 import os
 import sys
 from dataclasses import dataclass, field
 
 import pandas as pd
-#from datar.tibble import as_tibble
-from ..utils.pydyverse import Tibble
 import requests
 
+from ..utils.pydyverse import PrintTibble
 from ..utils.validation import valid_date
 from .connect import IOL
 
@@ -61,7 +60,6 @@ class StockDaily:
             f"/Cotizacion/seriehistorica/{from_date}/{to_date}/{adjusted}"
         )
         
-
         self.response = self.iol.get(URL, headers = h)
         # As precaution if someone wants to use this method
         # without transforming response to DataFrame
@@ -69,23 +67,18 @@ class StockDaily:
         return self.response 
 
     def to_dataframe(self):
-        """Transform response to Pandas DataFrame"""
+        """Transform to Pandas DataFrame"""
         df = pd.DataFrame(self.response.json())
             
         df.columns = ["close", "var", "open", "high", "low", "fecha_hora",
         "tendencia", "previous_close", "monto_operado", "volumen_nominal",
         "precio_promedio", "moneda", "precio_ajuste", "open_interest",
         "puntas", "q_operaciones", "descripcion", "plazo", "min_lamina", "lote"]
-            
-        self.df = df
+        self.df = (df) 
         return self.df
 
-    def to_tibble(self):
-        """Transform Pandas DataFrame to a tidyverse proxy"""
-        if len(self.df) == 0:
-            self.to_dataframe()
-        self.df = Tibble(self.df)
-        return self.df
+    def print_tibble(self):
+        print(PrintTibble(self.df))
 
 # --------------------------------------------------
 def get_args():
@@ -187,8 +180,8 @@ def main():
         adjusted = args.adjusted
     )
     print(test.df)
-    test.to_tibble()
-    print(test.df)
+    test.print_tibble()
+    # print(test.df)
 
     # json_file created with credentials
     if args.json_file:

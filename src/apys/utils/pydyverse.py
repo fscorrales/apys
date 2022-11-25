@@ -1,13 +1,10 @@
+from dataclasses import dataclass
+from typing import cast
+
 from pandas import DataFrame
 from pandas._config import get_option
 from pandas.io.formats import format as fmt
-from dataclasses import dataclass
-
-from pandas.io.formats.format import (
-    DataFrameFormatter, 
-    format_array, 
-)
-from typing import cast
+from pandas.io.formats.format import DataFrameFormatter, format_array
 
 class TidyDataFrameFormatter(DataFrameFormatter):
     def _truncate_horizontally(self) -> None:
@@ -89,14 +86,13 @@ class TidyDataFrameFormatter(DataFrameFormatter):
         return strcols
 
 @dataclass
-class Tibble():
+class PrintTibble():
     __data:DataFrame
 
     # def __init__(self, data=None, *args, meta=None, **kwargs):
     #     """Construct a tibble"""
     #     super().__init__(data, *args, **kwargs)
     #     self._datar = meta or {}
-
 
     def __repr__(self) -> str:
         """
