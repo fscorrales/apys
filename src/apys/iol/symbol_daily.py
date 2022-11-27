@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Author: Fernando Corrales <corrales_fernando@hotmail.com>
-Purpose: Get daily stock data from IOL
+Purpose: Get daily symbol data from IOL
 """
 
 import argparse
@@ -11,10 +11,10 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from datar import f, dplyr, tidyr, base
 
 import pandas as pd
 import requests
+from datar import base, dplyr, f, tidyr
 
 from ..utils.pydyverse import PrintTibble
 from ..utils.validation import valid_date
@@ -23,9 +23,9 @@ from .connect import IOL
 
 # --------------------------------------------------
 @dataclass
-class StockDaily:
+class SymbolDaily:
     """
-    Get daily stock data from IOL
+    Get daily symbol data from IOL
     :param IOL must be initialized first
     """
     iol: IOL
@@ -87,7 +87,7 @@ class StockDaily:
                 #convert = {'fecha': dt.date}
             ) >> \
             dplyr.transmute(
-                fecha = f.fecha,
+                date = f.fecha,
                 #plazo = f.plazo,
                 open = f.apertura,
                 high = f.maximo,
@@ -102,11 +102,11 @@ class StockDaily:
         # Filtramos las cotizaciones intradiarias de
         # los últimos días de cotización, si es hay
         df = df >> \
-            dplyr.group_by(f.fecha) >> \
+            dplyr.group_by(f.date) >> \
             dplyr.summarise(vol = base.max_(f.vol)) >> \
             dplyr.left_join(
                 df,
-                by = base.c(f.fecha, f.vol)
+                by = base.c(f.date, f.vol)
             ) >> \
             dplyr.relocate(
                 f.vol, 
@@ -114,8 +114,8 @@ class StockDaily:
             )
 
         # Convertimos en tipo date la columna fecha
-        df['fecha'] = pd.to_datetime(
-            df['fecha'], format='%Y-%m-%d'
+        df['date'] = pd.to_datetime(
+            df['date'], format='%Y-%m-%d'
         )
 
         self.df = (df) 
@@ -128,7 +128,7 @@ class StockDaily:
 def get_args():
     """Get needed params from user input"""
     parser = argparse.ArgumentParser(
-        description = 'Get daily stock data from IOL',
+        description = 'Get daily symbol data from IOL',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
@@ -215,7 +215,7 @@ def main():
             )
             sys.exit(msg)
 
-    test = StockDaily(
+    test = SymbolDaily(
         iol = iol,
         symbol = args.symbol,
         from_date = args.from_date,
@@ -241,4 +241,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    #python -m apys.iol.stock_daily GGAL 01-10-2022 -j True
+    #python -m apys.iol.symbol_daily GGAL 01-10-2022 -j True
