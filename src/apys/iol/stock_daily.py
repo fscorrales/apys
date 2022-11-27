@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
+from datar import f, dplyr, tidyr, base
 
 import pandas as pd
 import requests
@@ -69,11 +70,54 @@ class StockDaily:
     def to_dataframe(self):
         """Transform to Pandas DataFrame"""
         df = pd.DataFrame(self.response.json())
-            
-        df.columns = ["close", "var", "open", "high", "low", "fecha_hora",
-        "tendencia", "previous_close", "monto_operado", "volumen_nominal",
-        "precio_promedio", "moneda", "precio_ajuste", "open_interest",
-        "puntas", "q_operaciones", "descripcion", "plazo", "min_lamina", "lote"]
+
+        # Returning columns
+        # Index(['ultimoPrecio', 'variacion', 'apertura', 'maximo', 'minimo',
+        #        'fechaHora', 'tendencia', 'cierreAnterior', 'montoOperado',
+        #        'volumenNominal', 'precioPromedio', 'moneda', 'precioAjuste',
+        #        'interesesAbiertos', 'puntas', 'cantidadOperaciones',
+        #        'descripcionTitulo', 'plazo', 'laminaMinima', 'lote'],
+        #       dtype='object')        
+
+        df = df >> \
+            tidyr.separate(
+                f.fechaHora, 
+                into = ['fecha', None], 
+                sep = 10,
+                #convert = {'fecha': dt.date}
+            ) >> \
+            dplyr.transmute(
+                fecha = f.fecha,
+                #plazo = f.plazo,
+                open = f.apertura,
+                high = f.maximo,
+                low = f.minimo,
+                close = f.ultimoPrecio,
+                #prev_close = f.cierreAnterior,
+                vol = f.volumenNominal
+                #var = f.variacion,
+                #puntas = f.puntas
+            )
+
+        # Filtramos las cotizaciones intradiarias de
+        # los últimos días de cotización, si es hay
+        df = df >> \
+            dplyr.group_by(f.fecha) >> \
+            dplyr.summarise(vol = base.max_(f.vol)) >> \
+            dplyr.left_join(
+                df,
+                by = base.c(f.fecha, f.vol)
+            ) >> \
+            dplyr.relocate(
+                f.vol, 
+                _after = dplyr.tidyselect.last_col()
+            )
+
+        # Convertimos en tipo date la columna fecha
+        df['fecha'] = pd.to_datetime(
+            df['fecha'], format='%Y-%m-%d'
+        )
+
         self.df = (df) 
         return self.df
 
@@ -179,9 +223,7 @@ def main():
         market = args.market,
         adjusted = args.adjusted
     )
-    print(test.df)
     test.print_tibble()
-    # print(test.df)
 
     # json_file created with credentials
     if args.json_file:
