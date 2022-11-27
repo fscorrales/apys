@@ -162,3 +162,13 @@ if __name__ == '__main__':
     main()
     # From apys.src
     # python -m apys.iol.panels_country_instrument argentina Acciones -j True
+
+    # A tidy dataframe: 6 X 1
+    #               panel
+    #            <object>
+    # 0            Merval
+    # 1     Panel General
+    # 2         Merval 25
+    # 3  Merval Argentina
+    # 4            Burcap
+    # 5           CEDEARs

@@ -168,4 +168,9 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    #python -m apys.iol.symbol_info GGAL -j True
+    # python -m apys.iol.symbol_info GGAL -j True
+
+    # A tidy dataframe: 1 X 7
+    #     symbol                          desc    country   market      type     term        currency
+    #   <object>                      <object>   <object> <object>  <object> <object>        <object>
+    # 0     GGAL  Grupo Financiero Galicia S.A  argentina     bcba  ACCIONES       t2  peso_Argentino
