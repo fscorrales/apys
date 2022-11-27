@@ -5,7 +5,6 @@ Purpose: Get FCI symbol data from IOL
 """
 
 import argparse
-import datetime as dt
 import inspect
 import json
 import os
@@ -14,7 +13,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 import requests
-from datar import base, dplyr, f, tidyr
+from datar import dplyr, f
 
 from ..utils.pydyverse import PrintTibble
 from .connect import IOL
