@@ -21,7 +21,7 @@ from .connect import IOL
 
 # --------------------------------------------------
 @dataclass
-class CountryInstruments:
+class InstrumentsCountry:
     """
     Get available instruments by country from IOL
     :param IOL must be initialized first
@@ -133,7 +133,7 @@ def main():
             )
             sys.exit(msg)
 
-    test = CountryInstruments(
+    test = InstrumentsCountry(
         iol = iol,
         country = args.country,
     )
@@ -155,4 +155,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.country_instruments argentina -j True
+    # python -m apys.iol.instruments_country argentina -j True
