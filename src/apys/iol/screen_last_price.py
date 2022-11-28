@@ -10,7 +10,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from datar import dplyr, f
+from datar import dplyr, f, tidyr
 
 import pandas as pd
 import requests
@@ -69,13 +69,18 @@ class ScreenLastPrice:
 
         df = pd.concat([df, df['puntas'].apply(pd.Series)], axis=1)
         df = df >> \
+            tidyr.separate(
+                f.fecha, 
+                into = ['date_time', None], 
+                sep = 19
+            ) >> \
             dplyr.transmute(
                 symbol = f.simbolo,
                 # option_type = f.tipoOpcion,
                 # exercise_price = f.precioEjercicio,
                 # expire = f.fechaVencimiento,
                 desc = f.descripcion,
-                date_time = f.fecha,
+                date_time = f.date_time,
                 open = f.apertura,
                 high = f.maximo,
                 low = f.minimo,
@@ -89,7 +94,7 @@ class ScreenLastPrice:
 
         # Convertimos en tipo date la columna fecha
         df['date_time'] = pd.to_datetime(
-            df['date_time'], format='%Y-%m-%dT%H:%M:%S.%f'
+            df['date_time'], format='%Y-%m-%dT%H:%M:%S'
         )
 
         self.df = (df) 
