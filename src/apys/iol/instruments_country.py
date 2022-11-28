@@ -157,12 +157,12 @@ if __name__ == '__main__':
     # From apys.src
     # python -m apys.iol.instruments_country argentina -j True
     
-    # A tidy dataframe: 6 X 1
-    #               panel
-    #            <object>
-    # 0            Merval
-    # 1     Panel General
-    # 2         Merval 25
-    # 3  Merval Argentina
-    # 4            Burcap
-    # 5           CEDEARs
+    # A tidy dataframe: 6 X 2
+    #   instrument    country
+    #     <object>   <object>
+    # 0   Acciones  argentina
+    # 1      Bonos  argentina
+    # 2   Opciones  argentina
+    # 3  Cauciones  argentina
+    # 4    Futuros  argentina
+    # 5        FCI  argentina

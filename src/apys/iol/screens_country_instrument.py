@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Author: Fernando Corrales <corrales_fernando@hotmail.com>
-Purpose: Get available panels from a country and 
+Purpose: Get available screens from a country and 
 an instrument from IOL
 """
 
@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 import requests
+from datar import dplyr, f
 
 from ..utils.pydyverse import PrintTibble
 from .connect import IOL
@@ -21,9 +22,9 @@ from .connect import IOL
 
 # --------------------------------------------------
 @dataclass
-class PanelsFromCountryInstruments:
+class ScreensForCountryInstruments:
     """
-    Get available panels from a country and 
+    Get available screens for a country and 
     an instrument from IOL
     :param IOL must be initialized first
     """
@@ -59,6 +60,11 @@ class PanelsFromCountryInstruments:
         df = pd.DataFrame(self.response.json())
         # Index(['panel'], dtype='object')
 
+        df = df >> \
+            dplyr.transmute(
+                screen = f.panel
+            )
+
         self.df = (df) 
         return self.df
 
@@ -69,7 +75,7 @@ class PanelsFromCountryInstruments:
 def get_args():
     """Get needed params from user input"""
     parser = argparse.ArgumentParser(
-        description = 'Get available panels from a country \
+        description = 'Get available screens for a country \
         and an instrument from IOL',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
@@ -138,7 +144,7 @@ def main():
             )
             sys.exit(msg)
 
-    test = PanelsFromCountryInstruments(
+    test = ScreensForCountryInstruments(
         iol = iol,
         country = args.country,
         instrument= args.instrument
@@ -161,10 +167,10 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.panels_country_instrument argentina Acciones -j True
+    # python -m apys.iol.screens_country_instrument argentina Acciones -j True
 
     # A tidy dataframe: 6 X 1
-    #               panel
+    #              screen
     #            <object>
     # 0            Merval
     # 1     Panel General
