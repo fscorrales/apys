@@ -9,6 +9,7 @@ import inspect
 import json
 import os
 import sys
+import datetime as dt
 from dataclasses import dataclass, field
 from datar import dplyr, f, tidyr
 
@@ -104,7 +105,39 @@ class SymbolOptions:
                 f.expire, 
                 into = ['expire', None], 
                 sep = 10
+            ) >> \
+            tidyr.separate(
+                f.desc,
+                into = [None, None, 'strike', None, None],
+                sep = ' ',
+                remove = False
+            ) >> \
+            dplyr.transmute(
+                date_time = f.fechaHora,
+                underlying = f.subyacente,
+                symbol = f.symbol,
+                type = f.type,
+                expire = f.expire,
+                strike = f.strike,
+                open = f.apertura,
+                high = f.maximo,
+                low = f.minimo,
+                close = f.ultimoPrecio,
+                bid_ask = f.puntas,
+                vol = f.volumenNominal,
+                var = f.variacion,
+                desc = f.desc
             )
+        # Type conversion
+        df = df.astype({'strike':'float'})
+        df['expire'] = pd.to_datetime(
+            df['expire'], format='%Y-%m-%d'
+        )
+
+        # Days to expire
+        df['days_expire'] = (df['expire'] - pd.Timestamp.now()).dt.days
+        df = df >>\
+            dplyr.relocate(f.days_expire, _after = f.expire)
 
         df = df.set_index('symbol')
 
