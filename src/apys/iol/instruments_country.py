@@ -16,12 +16,14 @@ import requests
 from datar import dplyr, f
 
 from ..utils.pydyverse import PrintTibble
+from ..db.from_to_sql import FromToSQL
 from .connect import IOL
+from ..db.connect import ConnectDB
 
 
 # --------------------------------------------------
 @dataclass
-class InstrumentsCountry:
+class InstrumentsCountry(FromToSQL):
     """
     Get available instruments by country from IOL
     :param IOL must be initialized first
@@ -31,11 +33,7 @@ class InstrumentsCountry:
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
 
-    def __post_init__(self):
-        self.get_data()
-        self.to_dataframe()
-
-    def get_data(self):
+    def download_data(self):
         """Get response from IOL"""
         self.iol.update_token()
         h = {
@@ -46,10 +44,7 @@ class InstrumentsCountry:
         )
 
         self.response = self.iol.get(URL, headers = h)
-        # As precaution if someone wants to use this method
-        # without transforming response to DataFrame
-        self.df = pd.DataFrame()
-        return self.response 
+        self.to_dataframe()
 
     def to_dataframe(self):
         """Transform to Pandas DataFrame"""
@@ -64,6 +59,11 @@ class InstrumentsCountry:
 
         self.df = (df) 
         return self.df
+
+    def to_sql(self):
+        FromToSQL.to_sql(
+            self.df, 'asset_class_country'
+        )
 
     def print_tibble(self):
         print(PrintTibble(self.df))
@@ -133,11 +133,14 @@ def main():
             )
             sys.exit(msg)
 
-    test = InstrumentsCountry(
-        iol = iol,
-        country = args.country,
-    )
-    test.print_tibble()
+    sql_path = dir_path + '/iol.sqlite'
+    with ConnectDB(sql_path) as con:
+        test = InstrumentsCountry(
+            iol = iol,
+            country = args.country,
+            engine = con.engine
+        )
+        test.print_tibble()
 
     # json_file created with credentials
     if args.json_file:
