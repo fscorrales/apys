@@ -34,6 +34,9 @@ jupyter
 # json files and config.py (passwords)
 *.json
 
+# sqlite files
+*.sqlite
+
 # pdf files
 *.pdf
 

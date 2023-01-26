@@ -20,6 +20,7 @@ import pandas as pd
 from pyhomebroker import HomeBroker
 from ..utils.validation import valid_date
 from ..utils.pydyverse import PrintTibble
+from .homebroker_login import HomeBrokerLogin
 
 
 # --------------------------------------------------
@@ -114,20 +115,18 @@ def main():
     json_path = dir_path + '/cocos.json'
     
     if args.id_broker != '' and args.user != '' and args.password != '' and args.dni != '':
-        hb = HomeBroker(int(args.id_broker))
-        hb.auth.login(
-            dni = args.dni, user = args.user, 
-            password = args.password, raise_exception=True
-            )
+        hb = HomeBrokerLogin(
+            id_broker = args.id_broker, dni = args.dni, 
+            user = args.user, password = args.password
+        ).hb
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                hb = HomeBroker(int(data_json['broker']))
-                hb.auth.login(
-                    dni = data_json['dni'], user = data_json['user'], 
-                    password = data_json['password'], raise_exception=True
-                    )
+                hb = HomeBrokerLogin(
+                    id_broker = data_json['broker'], dni = data_json['dni'], 
+                    user = data_json['user'], password = data_json['password']
+                ).hb
             json_file.close()
         else:
             msg = (
