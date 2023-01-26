@@ -2,7 +2,7 @@
 """
 Author: Fernando Corrales <fscorrales@gmail.com>
 Source: https://github.com/crapher/pyhomebroker
-Purpose: Get daily symbol data from HomeBroker
+Purpose: Get history daily data from HomeBroker
 Require package: 
     -   pip install pyhomebroker
     -   pip install pyhomebroker --upgrade --no-cache-dir
@@ -17,26 +17,22 @@ import sys
 from dataclasses import dataclass, field
 
 import pandas as pd
-from pyhomebroker import HomeBroker
-from ..utils.validation import valid_date
 from ..utils.pydyverse import PrintTibble
 from .homebroker_login import HomeBrokerLogin
 
-
 # --------------------------------------------------
 @dataclass
-class SymbolDaily:
+class SymbolDaily(HomeBrokerLogin):
     """
     Get daily symbol data from HomeBroker
-    :param hb must be initialized first
     """
-    hb: HomeBroker
     symbol: str
     from_date: dt.date
     to_date: dt.date = dt.date.today()
     df: pd.DataFrame = field(init=False, repr=False)
 
     def __post_init__(self):
+        self.login()
         self.get_data()
 
     def get_data(self):
@@ -55,7 +51,7 @@ class SymbolDaily:
 def get_args():
     """Get needed params from user input"""
     parser = argparse.ArgumentParser(
-        description = 'Get daily symbol data from HomeBroker',
+        description = 'Get history daily data from HomeBroker',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
@@ -114,19 +110,28 @@ def main():
     dir_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     json_path = dir_path + '/cocos.json'
     
+    if isinstance(args.from_date, str):
+        from_date = dt.datetime.strptime(args.from_date, '%d-%m-%Y').date()
+    if isinstance(args.to_date, str):
+        to_date = dt.datetime.strptime(args.to_date, '%d-%m-%Y').date()
+
     if args.id_broker != '' and args.user != '' and args.password != '' and args.dni != '':
-        hb = HomeBrokerLogin(
+        test = SymbolDaily(
             id_broker = args.id_broker, dni = args.dni, 
-            user = args.user, password = args.password
-        ).hb
+            user = args.user, password = args.password,
+            symbol = args.symbol, from_date = from_date,
+            to_date = to_date,
+        )
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                hb = HomeBrokerLogin(
+                test = SymbolDaily(
                     id_broker = data_json['broker'], dni = data_json['dni'], 
-                    user = data_json['user'], password = data_json['password']
-                ).hb
+                    user = data_json['user'], password = data_json['password'],
+                    symbol = args.symbol, from_date = from_date,
+                    to_date = to_date,
+                )
             json_file.close()
         else:
             msg = (
@@ -136,17 +141,6 @@ def main():
             )
             sys.exit(msg)
 
-    if isinstance(args.from_date, str):
-        from_date = dt.datetime.strptime(args.from_date, '%d-%m-%Y').date()
-    if isinstance(args.to_date, str):
-        to_date = dt.datetime.strptime(args.to_date, '%d-%m-%Y').date()
-
-    test = SymbolDaily(
-        hb = hb,
-        symbol = args.symbol,
-        from_date = from_date,
-        to_date = to_date,
-    )
     test.print_tibble()
 
 # --------------------------------------------------

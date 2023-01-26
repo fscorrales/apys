@@ -19,18 +19,15 @@ import time
 from dataclasses import dataclass, field
 
 import pandas as pd
-from pyhomebroker import HomeBroker
-
-from ..utils.pydyverse import PrintTibble
 from .homebroker_login import HomeBrokerLogin
 
+from ..utils.pydyverse import PrintTibble
 
 # --------------------------------------------------
 @dataclass
 class LivePrice(HomeBrokerLogin):
     """
     Get constant datafrom HomeBroker
-    :param hb must be initialized first
     """
     securities: pd.DataFrame = field(init=False, repr=False)
 
@@ -142,7 +139,7 @@ def main():
     json_path = dir_path + '/cocos.json'
     
     if args.id_broker != '' and args.user != '' and args.password != '' and args.dni != '':
-        hb = LivePrice(
+        LivePrice(
             id_broker = args.id_broker, dni = args.dni, 
             user = args.user, password = args.password
         )
@@ -150,7 +147,7 @@ def main():
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                hb = LivePrice(
+                LivePrice(
                     id_broker = data_json['broker'], dni = data_json['dni'], 
                     user = data_json['user'], password = data_json['password']
                 )
