@@ -52,14 +52,13 @@ class HomeBrokerLogin():
         Event triggered when a new quote is received 
         from the options board
         """
-        pass
-        # global options
-        # thisData = quotes
-        # thisData = thisData.drop(['expiration', 'strike', 'kind'], axis=1)
-        # thisData['change'] = thisData["change"] / 100
-        # thisData['datetime'] = pd.to_datetime(thisData['datetime'])
-        # thisData = thisData.rename(columns={"bid_size": "bidsize", "ask_size": "asksize"})
-        # options.update(thisData)
+        thisData = quotes
+        thisData = thisData.drop(['expiration', 'strike', 'kind'], axis=1)
+        thisData['change'] = thisData["change"] / 100
+        thisData['datetime'] = pd.to_datetime(thisData['datetime'])
+        thisData = thisData.rename(columns={"bid_size": "bidsize", "ask_size": "asksize"})
+        self.options.update(thisData)
+        #self.securities.update(thisData)
 
     # --------------------------------------------------
     def on_securities(self, online, quotes):

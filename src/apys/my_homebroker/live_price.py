@@ -29,18 +29,27 @@ class LivePrice(HomeBrokerLogin):
     """
     Get constant datafrom HomeBroker
     """
+    symbols_security: list = None
+    symbols_option: list = None
     securities: pd.DataFrame = field(init=False, repr=False)
+    options: pd.DataFrame = field(init=False, repr=False)
 
     # --------------------------------------------------
     def __post_init__(self):
         self.login()
-        self.init_securities(['GGAL - 48hs', 'GGAL - 24hs', 'GGAL - spot'])
-        self.get_data()
+        if self.symbols_security != None:
+            self.init_securities(self.symbols_security)
+        if self.symbols_option != None:
+            self.init_options(self.symbols_option)
+        if self.symbols_security != None or self.symbols_option != None:
+            self.get_data()
 
     # --------------------------------------------------
     def init_securities(self, symbols:list) -> pd.DataFrame:
+        settlement = [' - 48hs', ' - 24hs', ' - spot']
+        symbols_settlement = [x + y for x in symbols for y in settlement]
         df = pd.DataFrame(
-            {'symbol' : symbols},
+            {'symbol' : symbols_settlement},
             columns=[
                 "symbol", "bid_size", "bid", "ask", "ask_size", "last",
                 "change", "open", "high", "low", "previous_close", 
@@ -50,28 +59,50 @@ class LivePrice(HomeBrokerLogin):
         self.securities = df
 
     # --------------------------------------------------
+    def init_options(self, symbols:list) -> pd.DataFrame:
+        df = pd.DataFrame(
+            {'symbol' : symbols},
+            columns=[
+                "symbol", "bid_size", "bid", "ask", "ask_size", "last",
+                "change", "open", "high", "low", "previous_close", 
+                "turnover", "volume", 'operations', 'datetime'
+            ])
+        df = df.set_index('symbol')
+        self.options = df
+        # if self.symbols_security != None:
+        #     self.securities = pd.concat([self.securities, self.options])
+        # else:
+        #     self.securities = self.options
+        
+
+    # --------------------------------------------------
     def get_data(self):
 
         self.hb.online.connect()
-        self.hb.online.subscribe_options()
-        self.hb.online.subscribe_securities('bluechips', '48hs')                       # Acciones del Panel lider - 48hs
-        self.hb.online.subscribe_securities('bluechips', '24hs')                       # Acciones del Panel lider - 24hs
-        self.hb.online.subscribe_securities('bluechips', 'SPOT')                       # Acciones del Panel lider - Contado Inmediato
-        self.hb.online.subscribe_securities('government_bonds', '48hs')                # Bonos - 48hs
-        # self.hb.online.subscribe_securities('government_bonds', '24hs')              # Bonos - 24hs
-        self.hb.online.subscribe_securities('government_bonds', 'SPOT')                # Bonos - Contado Inmediato
-        self.hb.online.subscribe_securities('cedears', '48hs')                         # CEDEARS - 48hs
-        # self.hb.online.subscribe_securities('cedears', '24hs')                       # CEDEARS - 24hs
-        # self.hb.online.subscribe_securities('cedears', 'SPOT')                       # CEDEARS - Contado Inmediato
-        self.hb.online.subscribe_securities('general_board', '48hs')                   # Acciones del Panel general - 48hs
-        # self.hb.online.subscribe_securities('general_board', '24hs')                 # Acciones del Panel general - 24hs
-        # self.hb.online.subscribe_securities('general_board', 'SPOT')                 # Acciones del Panel general - Contado Inmediato
-        self.hb.online.subscribe_securities('short_term_government_bonds', '48hs')     # LETRAS - 48hs
-        # self.hb.online.subscribe_securities('short_term_government_bonds', '24hs')   # LETRAS - 24hs
-        # self.hb.online.subscribe_securities('short_term_government_bonds', 'SPOT')   # LETRAS - Contado Inmediato
-        self.hb.online.subscribe_securities('corporate_bonds', '48hs')                 # Obligaciones Negociables - 48hs
-        # self.hb.online.subscribe_securities('corporate_bonds', '24hs')               # Obligaciones Negociables - 24hs
-        # self.hb.online.subscribe_securities('corporate_bonds', 'SPOT')               # Obligaciones Negociables - Contado Inmediato
+        
+        if self.symbols_option != None:
+            self.hb.online.subscribe_options()
+        
+        if self.symbols_security != None:
+            self.hb.online.subscribe_securities('bluechips', '48hs')
+            self.hb.online.subscribe_securities('bluechips', '24hs')
+            self.hb.online.subscribe_securities('bluechips', 'SPOT')
+            self.hb.online.subscribe_securities('government_bonds', '48hs')
+            # self.hb.online.subscribe_securities('government_bonds', '24hs')
+            self.hb.online.subscribe_securities('government_bonds', 'SPOT')
+            self.hb.online.subscribe_securities('cedears', '48hs')
+            # self.hb.online.subscribe_securities('cedears', '24hs')
+            # self.hb.online.subscribe_securities('cedears', 'SPOT')
+            self.hb.online.subscribe_securities('general_board', '48hs')
+            # self.hb.online.subscribe_securities('general_board', '24hs')
+            # self.hb.online.subscribe_securities('general_board', 'SPOT')
+            self.hb.online.subscribe_securities('short_term_government_bonds', '48hs')
+            # self.hb.online.subscribe_securities('short_term_government_bonds', '24hs')
+            # self.hb.online.subscribe_securities('short_term_government_bonds', 'SPOT')
+            self.hb.online.subscribe_securities('corporate_bonds', '48hs')
+            # self.hb.online.subscribe_securities('corporate_bonds', '24hs')
+            # self.hb.online.subscribe_securities('corporate_bonds', 'SPOT')
+        
         self.hb.online.subscribe_repos()
 
         # Referencias:
@@ -85,7 +116,7 @@ class LivePrice(HomeBrokerLogin):
         while True:
             try:
                 self.print_tibble()
-                time.sleep(2) #update cada 2 SEGUNDOS
+                time.sleep(5) #update cada 2 SEGUNDOS
 
             except:
                 print('Hubo un ERROR')
@@ -100,6 +131,22 @@ def get_args():
     parser = argparse.ArgumentParser(
         description = 'Get daily symbol data from HomeBroker',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument(
+        '-s', '--securities', 
+        metavar = 'securities',
+        nargs='*',
+        default = None,
+        type=str,
+        help = "List of securities to get live price")
+
+    parser.add_argument(
+        '-o', '--options', 
+        metavar = 'options',
+        nargs='*',
+        default = None,
+        type=str,
+        help = "List of options to get live price")
 
     parser.add_argument(
         '-i', '--id_broker', 
@@ -139,18 +186,18 @@ def main():
     json_path = dir_path + '/cocos.json'
     
     if args.id_broker != '' and args.user != '' and args.password != '' and args.dni != '':
-        LivePrice(
-            id_broker = args.id_broker, dni = args.dni, 
-            user = args.user, password = args.password
-        )
+        id_broker = args.id_broker
+        user = args.user
+        password = args.password
+        dni = args.dni
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                LivePrice(
-                    id_broker = data_json['broker'], dni = data_json['dni'], 
-                    user = data_json['user'], password = data_json['password']
-                )
+                id_broker = data_json['broker']
+                user = data_json['user']
+                password = data_json['password']
+                dni = data_json['dni']
             json_file.close()
         else:
             msg = (
@@ -160,11 +207,15 @@ def main():
             )
             sys.exit(msg)
 
-    # test = LivePrice()
-    # test.print_tibble()
+    LivePrice(
+        id_broker = id_broker, dni = dni, 
+        user = user, password = password,
+        symbols_security = args.securities,
+        symbols_option = args.options
+    )
 
 # --------------------------------------------------
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.my_homebroker.live_price
+    # python -m apys.my_homebroker.live_price -s GGAL COME -o GFGC29729F
