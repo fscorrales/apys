@@ -125,6 +125,18 @@ class LivePrice(HomeBrokerLogin):
     def print_tibble(self):
         print(PrintTibble(self.securities))
 
+    # # Cauciones
+    # i = 1
+    # fechas = []
+    # while i < 31:
+    #     fecha = date.today() + timedelta(days=i)
+    #     fechas.extend([fecha])
+    #     i += 1
+
+    # cauciones = pd.DataFrame({'settlement':fechas}, columns=['settlement','last', 'turnover', 'bid_amount', 'bid_rate', 'ask_rate', 'ask_amount'])
+    # cauciones['settlement'] = pd.to_datetime(cauciones['settlement'])
+    # cauciones = cauciones.set_index('settlement')
+
 # --------------------------------------------------
 def get_args():
     """Get needed params from user input"""
