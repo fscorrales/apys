@@ -31,7 +31,7 @@ class AssetClassCountry(SQLUtils):
     country: str #argentina o estados_Unidos
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
-    _TABLE_NAME:str = field(init=False, repr=False, default='iol_asset_class_country')
+    _TABLE_NAME:str = field(init=False, repr=False, default='asset_class_country')
     _INDEX_COL:str = field(init=False, repr=False, default='')
     _FILTER_COL:str = field(init=False, repr=False, default='country')
     _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
@@ -149,7 +149,7 @@ def main():
         country = args.country
     )
     test.print_tibble()
-    test.to_sql(dir_path + '/arg_market.sqlite')
+    test.to_sql(dir_path + '/iol.sqlite')
 
 
     # json_file created with credentials

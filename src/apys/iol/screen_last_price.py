@@ -10,18 +10,20 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from datar import dplyr, f, tidyr
 
 import pandas as pd
 import requests
+from datar import dplyr, f, tidyr
 
+from ..models.iol_model import IOLModel
 from ..utils.pydyverse import PrintTibble
+from ..utils.sql_utils import SQLUtils
 from .connect import IOL
 
 
 # --------------------------------------------------
 @dataclass
-class ScreenLastPrice:
+class ScreenLastPrice(SQLUtils):
     """
     Get screen's last price from IOL
     :param IOL must be initialized first
@@ -32,6 +34,10 @@ class ScreenLastPrice:
     country: str = 'argentina'
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
+    _TABLE_NAME:str = field(init=False, repr=False, default='screen_last_price')
+    _INDEX_COL:str = field(init=False, repr=False, default='symbol')
+    _FILTER_COL:str = field(init=False, repr=False, default='symbol')
+    _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
 
     def __post_init__(self):
         self.get_data()
@@ -75,6 +81,9 @@ class ScreenLastPrice:
                 sep = 19
             ) >> \
             dplyr.transmute(
+                country = self.country,
+                asset_class = self.instrument,
+                screen = self.screen,
                 symbol = f.simbolo,
                 # option_type = f.tipoOpcion,
                 # exercise_price = f.precioEjercicio,
@@ -189,6 +198,7 @@ def main():
         country = args.country
     )
     test.print_tibble()
+    test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:

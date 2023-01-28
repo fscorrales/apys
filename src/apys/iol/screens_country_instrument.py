@@ -16,13 +16,15 @@ import pandas as pd
 import requests
 from datar import dplyr, f
 
+from ..models.iol_model import IOLModel
 from ..utils.pydyverse import PrintTibble
+from ..utils.sql_utils import SQLUtils
 from .connect import IOL
 
 
 # --------------------------------------------------
 @dataclass
-class ScreensForCountryInstruments:
+class ScreensForCountryInstruments(SQLUtils):
     """
     Get available screens for a country and 
     an instrument from IOL
@@ -33,6 +35,10 @@ class ScreensForCountryInstruments:
     instrument: str
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
+    _TABLE_NAME:str = field(init=False, repr=False, default='screens_country_instrument')
+    _INDEX_COL:str = field(init=False, repr=False, default='id')
+    _FILTER_COL:str = field(init=False, repr=False, default_factory= lambda:['country', 'asset_class'])
+    _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
 
     def __post_init__(self):
         self.get_data()
@@ -62,6 +68,8 @@ class ScreensForCountryInstruments:
 
         df = df >> \
             dplyr.transmute(
+                country = self.country,
+                asset_class = self.instrument,
                 screen = f.panel
             )
 
@@ -150,6 +158,7 @@ def main():
         instrument= args.instrument
     )
     test.print_tibble()
+    test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:

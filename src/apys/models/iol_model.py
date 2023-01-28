@@ -1,6 +1,7 @@
-from sqlalchemy import (MetaData, Table, Column, Integer, Numeric, String,
-DateTime, ForeignKey, create_engine)
 from dataclasses import dataclass
+
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer,
+                        MetaData, Numeric, String, Table, create_engine)
 
 metadata = MetaData()
 
@@ -17,11 +18,143 @@ class IOLModel:
     def model_tables(self):
         """Create table models"""
 
-        self.iol_asset_class_country = Table(
-            'iol_asset_class_country', self.metadata,
+        self.asset_class_country = Table(
+            'asset_class_country', self.metadata,
             Column('id', Integer(), primary_key=True, autoincrement = True),
             Column('asset_class', String(20), nullable=False),
             Column('country', String(20), nullable=False)
+        )
+
+        self.fci_info = Table(
+            'fci_info', self.metadata,
+            Column('symbol', String(20), primary_key=True, unique=True, nullable=False),
+            Column('desc', String(50)),
+            Column('type', String(20)),
+            Column('adm_type', String(20)),
+            Column('horizon', String(20)),
+            Column('profile', String(20)),
+            Column('yearly_var', Numeric(5,5)),
+            Column('monthly_var', Numeric(5,5)),
+            Column('investment', String(300)),
+            Column('term', String(2)),
+            Column('rescue', String(2)),
+            Column('report', String(250)),
+            Column('regulation', String(250)),
+            Column('currency', String(20)),
+            Column('country', String(20)),
+            Column('market', String(20)),
+            Column('bloomberg', String(20)),
+        )
+
+        self.screen_last_price = Table(
+            'screen_last_price', self.metadata,
+            Column('country', String(20), nullable=False),
+            Column('asset_class', String(20), nullable=False),
+            Column('screen', String(20), nullable=False),
+            Column('symbol', String(20), primary_key=True, unique=True, nullable=False),
+            Column('desc', String(50)),
+            Column('date_time', DateTime()),
+            Column('open', Numeric(12,2)),
+            Column('high', Numeric(12,2)),
+            Column('low', Numeric(12,2)),
+            Column('close', Numeric(12,2)),
+            Column('bid_q', Numeric(12,2)),
+            Column('bid_price', Numeric(12,2)),
+            Column('ask_price', Numeric(12,2)),
+            Column('ask_q', Numeric(12,2)),
+            Column('vol', Numeric(12,2)),
+        )
+
+        self.screens_country_instrument = Table(
+            'screens_country_instrument', self.metadata,
+            Column('id', Integer(), primary_key=True, autoincrement = True),
+            Column('country', String(20), nullable=False),
+            Column('asset_class', String(20), nullable=False),
+            Column('screen', String(20), nullable=False),
+        )
+
+        self.symbol_daily = Table(
+            'symbol_daily', self.metadata,
+            Column('id', Integer(), primary_key=True, autoincrement = True),
+            Column('symbol', String(20), nullable=False),
+            Column('market', String(20), nullable=False),
+            Column('date', DateTime()),
+            Column('open', Numeric(12,2)),
+            Column('high', Numeric(12,2)),
+            Column('low', Numeric(12,2)),
+            Column('close', Numeric(12,2)),
+            Column('vol', Numeric(12,2)),
+        )
+
+        self.symbol_info = Table(
+            'symbol_info', self.metadata,
+            Column('symbol', String(20), primary_key=True, unique=True, nullable=False),
+            Column('market', String(20)),
+            Column('desc', String(50)),
+            Column('country', String(20)),
+            Column('type', String(20)),
+            Column('term', String(2)),
+            Column('currency', String(20)),
+        )
+
+        self.symbol_last_price = Table(
+            'symbol_last_price', self.metadata,
+            Column('id', Integer(), primary_key=True, autoincrement = True),
+            Column('symbol', String(20)),
+            Column('type', String(20)),
+            Column('date_time', DateTime()),
+            Column('open', Numeric(12,2)),
+            Column('high', Numeric(12,2)),
+            Column('low', Numeric(12,2)),
+            Column('close', Numeric(12,2)),
+            Column('bid_q', Numeric(12,2)),
+            Column('bid_price', Numeric(12,2)),
+            Column('ask_price', Numeric(12,2)),
+            Column('ask_q', Numeric(12,2)),
+            Column('vol', Numeric(12,2)),
+            Column('desc', String(50)),
+            Column('market', String(20)),
+            Column('currency', String(20)),
+            Column('country', String(20)),
+            Column('term', String(2)),
+            Column('lote', Numeric(12,2)),
+            Column('lamina_min', Numeric(12,2)),
+            Column('q_min', Numeric(12,2)),
+            Column('shown', Boolean()),
+            Column('buyable', Boolean()),
+            Column('sellable', Boolean()),
+        )
+
+        self.symbol_options = Table(
+            'symbol_options', self.metadata,
+            Column('underlying', String(20)),
+            Column('date_time', DateTime()),
+            Column('symbol', String(20), primary_key=True, unique=True, nullable=False),
+            Column('type', String(20)),
+            Column('expire', DateTime()),
+            Column('days_expire', Numeric(3)),
+            Column('desc', String(50)),
+            Column('strike', Numeric(12,2)),
+            Column('open', Numeric(12,2)),
+            Column('high', Numeric(12,2)),
+            Column('low', Numeric(12,2)),
+            Column('close', Numeric(12,2)),
+            Column('bid_ask', Numeric(12,2)),
+            # Column('bid_price', Numeric(12,2)),
+            # Column('ask_price', Numeric(12,2)),
+            # Column('ask_q', Numeric(12,2)),
+            Column('vol', Numeric(12,2)),
+            Column('var', Numeric(12,2)),
+            # Column('market', String(20)),
+            # Column('currency', String(20)),
+            # Column('country', String(20)),
+            # Column('term', String(2)),
+            # Column('lote', Numeric(12,2)),
+            # Column('lamina_min', Numeric(12,2)),
+            # Column('q_min', Numeric(12,2)),
+            # Column('shown', Boolean()),
+            # Column('buyable', Boolean()),
+            # Column('sellable', Boolean()),
         )
 
     def create_engine(self):

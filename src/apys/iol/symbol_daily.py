@@ -18,12 +18,14 @@ from datar import base, dplyr, f, tidyr
 
 from ..utils.pydyverse import PrintTibble
 from ..utils.validation import valid_date
+from ..utils.sql_utils import SQLUtils
+from ..models.iol_model import IOLModel
 from .connect import IOL
 
 
 # --------------------------------------------------
 @dataclass
-class SymbolDaily:
+class SymbolDaily(SQLUtils):
     """
     Get daily symbol data from IOL
     :param IOL must be initialized first
@@ -36,6 +38,10 @@ class SymbolDaily:
     adjusted: bool = False
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
+    _TABLE_NAME:str = field(init=False, repr=False, default='symbol_daily')
+    _INDEX_COL:str = field(init=False, repr=False, default='id')
+    _FILTER_COL:str = field(init=False, repr=False, default='symbol')
+    _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
 
     def __post_init__(self):
         self.get_data()
@@ -87,6 +93,8 @@ class SymbolDaily:
                 #convert = {'fecha': dt.date}
             ) >> \
             dplyr.transmute(
+                symbol = self.symbol,
+                market = self.market,
                 date = f.fecha,
                 #plazo = f.plazo,
                 open = f.apertura,
@@ -224,6 +232,7 @@ def main():
         adjusted = args.adjusted
     )
     test.print_tibble()
+    test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:

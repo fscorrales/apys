@@ -26,49 +26,57 @@ class SQLUtils():
         self.engine = self._SQL_MODEL(sql_path).engine 
         connection = self.engine.connect()
         metadata = MetaData()
-        sql_table = Table(self._TABLE_NAME, 
-        metadata, autoload=True, autoload_with=self.engine)
-        
-        if isinstance(self._FILTER_COL, list):
-            where_lst = []
-            for i in self._FILTER_COL:
-                unique_col = self.df[i].unique()
-                where_lst.append(sql_table.c[i].in_(unique_col))
-            where_clause = and_(*where_lst)
+        if self.engine.dialect.has_table(connection=connection, table_name=self._TABLE_NAME):
+            sql_table = Table(self._TABLE_NAME, 
+            metadata, autoload=True, autoload_with=self.engine)
+            if isinstance(self._FILTER_COL, list):
+                where_lst = []
+                for i in self._FILTER_COL:
+                    unique_col = self.df[i].unique()
+                    where_lst.append(sql_table.c[i].in_(unique_col))
+                where_clause = and_(*where_lst)
+            else:
+                unique_col = self.df[self._FILTER_COL].unique()
+                where_clause = sql_table.c[self._FILTER_COL].in_(unique_col)
+            
+            u = delete(sql_table).where(where_clause)
+            result = connection.execute(u)
+            return True
         else:
-            unique_col = self.df[self._FILTER_COL].unique()
-            where_clause = sql_table.c[self._FILTER_COL].in_(unique_col)
-        
-        u = delete(sql_table).where(where_clause)
-        result = connection.execute(u)
-        return result
+            print("Table doesn't exist")
+            return False
 
     # --------------------------------------------------
     def delete_all_rows(self, sql_path:str):
         """Delete all rows from a table"""
         self.engine = self._SQL_MODEL(sql_path).engine   
         metadata = MetaData()
-        sql_table = Table(self._TABLE_NAME, 
-        metadata, autoload=True, autoload_with=self.engine)
-        connection = self.engine.connect()
-        u = delete(sql_table)
-        result = connection.execute(u)
-        return result
+        if self.engine.dialect.has_table(connection=connection, table_name=self._TABLE_NAME):
+            sql_table = Table(self._TABLE_NAME, 
+            metadata, autoload=True, autoload_with=self.engine)
+            connection = self.engine.connect()
+            u = delete(sql_table)
+            result = connection.execute(u)
+            return True
+        else:
+            print("Table doesn't exist")
+            return False
 
     # --------------------------------------------------
     def to_sql(self, sql_path:str, replace:bool = False):
         """From DataFrame to sql DataBase"""     
         if replace:
-            self.delete_all_rows(sql_path)            
+            exist_table = self.delete_all_rows(sql_path)            
         else:
-            self.delete_rows_with_df_col(sql_path)
+            exist_table = self.delete_rows_with_df_col(sql_path)
         
-        self.df.to_sql(
-            name = self._TABLE_NAME,
-            con = self.engine,
-            if_exists = 'append',
-            index=False
-        )
+        if exist_table:
+            self.df.to_sql(
+                name = self._TABLE_NAME,
+                con = self.engine,
+                if_exists = 'append',
+                index=False
+            )
         self.engine.dispose()
 
     # --------------------------------------------------

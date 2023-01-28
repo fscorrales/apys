@@ -15,13 +15,15 @@ import pandas as pd
 import requests
 from datar import dplyr, f
 
+from ..models.iol_model import IOLModel
 from ..utils.pydyverse import PrintTibble
+from ..utils.sql_utils import SQLUtils
 from .connect import IOL
 
 
 # --------------------------------------------------
 @dataclass
-class FCIInfo:
+class FCIInfo(SQLUtils):
     """
     Get fci info from IOL
     :param IOL must be initialized first
@@ -30,6 +32,10 @@ class FCIInfo:
     symbol: str = ''
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
+    _TABLE_NAME:str = field(init=False, repr=False, default='fci_info')
+    _INDEX_COL:str = field(init=False, repr=False, default='symbol')
+    _FILTER_COL:str = field(init=False, repr=False, default='symbol')
+    _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
 
     def __post_init__(self):
         self.get_data()
@@ -164,6 +170,7 @@ def main():
         symbol = args.symbol,
     )
     test.print_tibble()
+    test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:

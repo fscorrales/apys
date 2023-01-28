@@ -16,12 +16,14 @@ import pandas as pd
 import requests
 
 from ..utils.pydyverse import PrintTibble
+from ..utils.sql_utils import SQLUtils
+from ..models.iol_model import IOLModel
 from .connect import IOL
 
 
 # --------------------------------------------------
 @dataclass
-class SymbolLastPrice:
+class SymbolLastPrice(SQLUtils):
     """
     Get symbol's last price from IOL
     :param IOL must be initialized first
@@ -31,6 +33,10 @@ class SymbolLastPrice:
     market: str = 'bCBA'
     response: requests.Response = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
+    _TABLE_NAME:str = field(init=False, repr=False, default='symbol_last_price')
+    _INDEX_COL:str = field(init=False, repr=False, default='id')
+    _FILTER_COL:str = field(init=False, repr=False, default='symbol')
+    _SQL_MODEL:IOLModel = field(init=False, repr=False, default=IOLModel)
 
     def __post_init__(self):
         self.get_data()
@@ -192,6 +198,7 @@ def main():
         market=args.market
     )
     test.print_tibble()
+    test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:
