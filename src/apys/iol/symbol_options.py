@@ -68,6 +68,17 @@ class SymbolOptions(SQLUtils):
         #        'simbolo', 'descripcion', 'pais', 'mercado', 'tipo', 'plazo', 'moneda'],
         #       dtype='object')
 
+        # "simboloSubyacente": "GGAL",
+        # "fechaVencimiento": "2023-02-17T00:00:00",
+        # "tipoOpcion": "Call",
+        # "simbolo": "GFGC170.FE",
+        # "descripcion": "Call GGAL 170.00 Vencimiento: 17/02/2023",
+        # "pais": "argentina",
+        # "mercado": "bcba",
+        # "tipo": "OPCIONES",
+        # "plazo": "t1",
+        # "moneda": "peso_Argentino"
+
         options = []
         for i in range(len(data)):
             option = data[i]['cotizacion']
@@ -76,6 +87,10 @@ class SymbolOptions(SQLUtils):
             option['type'] = data[i]['tipoOpcion']
             option['expire'] = data[i]['fechaVencimiento']
             option['desc'] = data[i]['descripcion']
+            option['term'] = data[i]['plazo']
+            option['currency'] = data[i]['moneda']
+            option['market'] = data[i]['mercado']
+            option['country'] = data[i]['pais']
             options.append(option)
         df = pd.DataFrame(options)
 
@@ -105,7 +120,6 @@ class SymbolOptions(SQLUtils):
         # expire                                               2022-12-16
         # desc                   Call GGAL 132.00 Vencimiento: 16/12/2022
         # Name: GFGC132.DI, dtype: object
-
         df = df >> \
             tidyr.separate(
                 f.expire, 
@@ -132,7 +146,11 @@ class SymbolOptions(SQLUtils):
                 bid_ask = f.puntas,
                 vol = f.volumenNominal,
                 var = f.variacion,
-                desc = f.desc
+                desc = f.desc,
+                # term = f.term,
+                # currency = f.currency,
+                # market = f.market,
+                # country = f.country
             )
         # Type conversion
         df = df.astype({'strike':'float'})
