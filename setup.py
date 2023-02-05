@@ -9,6 +9,8 @@ setup(
     package_dir={'': 'src'},
     install_requires=[
         'datar',
+        'datar-numpy',
+        'datar-pandas',
         'pandas',
         'numpy',
         'pyhomebroker',
