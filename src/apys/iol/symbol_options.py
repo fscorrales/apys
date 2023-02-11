@@ -153,6 +153,7 @@ class SymbolOptions(SQLUtils):
                 # country = f.country
             )
         # Type conversion
+        df['strike'] = df['strike'].str.replace(',', '')
         df = df.astype({'strike':'float'})
         df['expire'] = pd.to_datetime(
             df['expire'], format='%Y-%m-%d'
@@ -267,4 +268,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.symbol_options GGAL -j True
+    # python -m apys.iol.symbol_options YPFD -j True
