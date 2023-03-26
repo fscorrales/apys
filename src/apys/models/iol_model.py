@@ -147,7 +147,7 @@ class IOLModel:
             Column('var', Numeric(12,2)),
             # Column('market', String(20)),
             # Column('currency', String(20)),
-            # Column('country', String(20)),
+            Column('country', String(20)),
             # Column('term', String(2)),
             # Column('lote', Numeric(12,2)),
             # Column('lamina_min', Numeric(12,2)),

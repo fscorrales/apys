@@ -116,8 +116,7 @@ class LivePrice(HomeBrokerLogin):
         while True:
             try:
                 self.print_tibble()
-                time.sleep(5) #update cada 2 SEGUNDOS
-
+                time.sleep(15) #update cada 2 SEGUNDOS
             except:
                 print('Hubo un ERROR')
 
@@ -219,15 +218,23 @@ def main():
             )
             sys.exit(msg)
 
-    LivePrice(
+    live_price = LivePrice(
         id_broker = id_broker, dni = dni, 
         user = user, password = password,
         symbols_security = args.securities,
         symbols_option = args.options
     )
 
+    # live_price.get_data()
+    # while True:
+    #     try:
+    #         live_price.print_tibble()
+    #         time.sleep(15) #update
+    #     except:
+    #         print('Hubo un ERROR')
+
 # --------------------------------------------------
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.my_homebroker.live_price -s GGAL COME -o GFGC29729F
+    # python -m apys.my_homebroker.live_price -s GGAL COME -o GFGC380.AB

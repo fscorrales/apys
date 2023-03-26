@@ -73,33 +73,37 @@ class ScreenLastPrice(SQLUtils):
         # {'cantidadCompra': 3.0, 'precioCompra': 152.5, 
         # 'precioVenta': 152.75, 'cantidadVenta': 5545.0}
 
-        df = pd.concat([df, df['puntas'].apply(pd.Series)], axis=1)
-        df = df >> \
-            tidyr.separate(
-                f.fecha, 
-                into = ['date_time', None], 
-                sep = 19
-            ) >> \
-            dplyr.transmute(
-                country = self.country,
-                asset_class = self.instrument,
-                screen = self.screen,
-                symbol = f.simbolo,
-                # option_type = f.tipoOpcion,
-                # exercise_price = f.precioEjercicio,
-                # expire = f.fechaVencimiento,
-                desc = f.descripcion,
-                date_time = f.date_time,
-                open = f.apertura,
-                high = f.maximo,
-                low = f.minimo,
-                close = f.ultimoPrecio,
-                bid_q = f.cantidadCompra,
-                bid_price = f.precioCompra,
-                ask_price = f.precioVenta,
-                ask_q = f.cantidadVenta,
-                vol = f.volumen
-            )
+        df['date_time'] = df['fecha'].str[0:19]
+        df['country'] = self.country
+        df['asset_class'] = self.instrument
+        df['screen'] = self.screen
+        if isinstance(type(df['puntas'][0]), dict):
+            df = pd.concat([df, df['puntas'].apply(pd.Series)], axis=1)
+        else:
+            df['cantidadCompra'] = 0
+            df['precioCompra'] = 0
+            df['precioVenta'] = 0
+            df['cantidadVenta'] = 0
+        df.drop(
+            columns=[
+                'variacionPorcentual', 'ultimoCierre', 'cantidadOperaciones',
+                'fecha', 'tipoOpcion', 'precioEjercicio', 'fechaVencimiento',
+                'mercado', 'moneda', 'puntas'
+            ], inplace=True
+        )
+        df.rename(columns={
+            'simbolo':'symbol',
+            'descripcion':'desc',
+            'apertura':'open',
+            'maximo':'high',
+            'minimo':'low',
+            'ultimoPrecio':'close',
+            'cantidadCompra':'bid_q',
+            'precioCompra':'bid_price',
+            'precioVenta':'ask_price',
+            'cantidadVenta':'ask_q',
+            'volumen':'vol',
+        }, inplace=True, copy=False)
 
         # Convertimos en tipo date la columna fecha
         df['date_time'] = pd.to_datetime(
@@ -216,7 +220,7 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.screen_last_price -i Opciones -s "De Acciones" -j True
+    # python -m apys.iol.screen_last_price -i Acciones -s "Merval Argentina" -j True
 
     # A tidy dataframe: 3221 X 12
     #        symbol     desc               date_time      open      high       low     close     bid_q  bid_price  ask_price     ask_q  ...

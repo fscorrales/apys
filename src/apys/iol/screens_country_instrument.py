@@ -65,13 +65,13 @@ class ScreensForCountryInstruments(SQLUtils):
         """Transform to Pandas DataFrame"""
         df = pd.DataFrame(self.response.json())
         # Index(['panel'], dtype='object')
-
-        df = df >> \
-            dplyr.transmute(
-                country = self.country,
-                asset_class = self.instrument,
-                screen = f.panel
-            )
+        if not df.empty:
+            df = df >> \
+                dplyr.transmute(
+                    country = self.country,
+                    asset_class = self.instrument,
+                    screen = f.panel
+                )
 
         self.df = (df) 
         return self.df
@@ -157,8 +157,9 @@ def main():
         country = args.country,
         instrument= args.instrument
     )
-    test.print_tibble()
-    test.to_sql(dir_path + '/iol.sqlite')
+    if not test.df.empty:
+        test.print_tibble()
+        test.to_sql(dir_path + '/iol.sqlite')
 
     # json_file created with credentials
     if args.json_file:
@@ -176,7 +177,7 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.screens_country_instrument argentina Acciones -j True
+    # python -m apys.iol.screens_country_instrument argentina Cauciones -j True
 
     # A tidy dataframe: 6 X 1
     #              screen

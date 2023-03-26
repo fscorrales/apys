@@ -150,7 +150,7 @@ class SymbolOptions(SQLUtils):
                 # term = f.term,
                 # currency = f.currency,
                 # market = f.market,
-                # country = f.country
+                country = f.country
             )
         # Type conversion
         df['strike'] = df['strike'].str.replace(',', '')
@@ -208,12 +208,12 @@ def get_args():
         help = "Password to log in IOL")
 
     parser.add_argument(
-        '-j', '--json_file', 
-        metavar = 'json file',
-        default = False,
-        type=bool,
-        help = 'Should json file be created ' + 
-        'or updated with credentials')
+        '--json_file', action='store_true', 
+        help= 'Should json file be created ' + 
+        'or updated with credentials'
+    )
+    parser.add_argument('--no-json_file', dest='json_file', action='store_false')
+    parser.set_defaults(json_file=True)
 
     return parser.parse_args()
 
@@ -268,4 +268,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.symbol_options YPFD -j True
+    # python -m apys.iol.symbol_options YPFD
