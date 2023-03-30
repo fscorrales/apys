@@ -15,7 +15,7 @@ setup(
         'numpy',
         'pyhomebroker',
         'requests',
-        'SQLAlchemy',
+        'SQLAlchemy>=1,<2',
         'urllib3'
     ]
 )

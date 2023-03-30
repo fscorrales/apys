@@ -122,7 +122,7 @@ class LivePrice(HomeBrokerLogin):
 
     # --------------------------------------------------
     def print_tibble(self):
-        print(PrintTibble(self.securities))
+        print(PrintTibble(self.options))
 
     # # Cauciones
     # i = 1
@@ -237,4 +237,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.my_homebroker.live_price -s GGAL COME -o GFGC380.AB
+    # python -m apys.my_homebroker.live_price -s GGAL COME -o GFGC440.AB

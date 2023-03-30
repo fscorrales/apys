@@ -56,7 +56,7 @@ class HomeBrokerLogin():
         thisData = thisData.drop(['expiration', 'strike', 'kind'], axis=1)
         thisData['change'] = thisData["change"] / 100
         thisData['datetime'] = pd.to_datetime(thisData['datetime'])
-        thisData = thisData.rename(columns={"bid_size": "bidsize", "ask_size": "asksize"})
+        #thisData = thisData.rename(columns={"bid_size": "bidsize", "ask_size": "asksize"})
         self.options.update(thisData)
         #self.securities.update(thisData)
 
