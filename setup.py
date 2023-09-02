@@ -4,7 +4,7 @@ setup(
     name='apys',
     description='Set of python functions to access different APIs',
     author='Fernando Corrales',
-    author_email='corrales_fernando@hotmail.com',
+    author_email='fscpython@gmail.com',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
@@ -16,6 +16,7 @@ setup(
         'pyhomebroker',
         'requests',
         'SQLAlchemy>=1,<2',
-        'urllib3'
+        'urllib3',
+        'pyRofex',
     ]
 )

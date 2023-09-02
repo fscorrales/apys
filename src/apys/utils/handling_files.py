@@ -31,6 +31,10 @@ class HandlingFiles():
         return df
     
     # --------------------------------------------------
+    def to_excel(self, PATH:str):
+        self.df.to_excel(PATH, index=False)
+    
+    # --------------------------------------------------
     def get_list_of_files(self, path:str) -> list:
         """Get list of files in a folder
         :param path: folder or file.

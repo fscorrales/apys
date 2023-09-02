@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Author: Fernando Corrales <fscorrales@gmail.com>
+Author: Fernando Corrales <fscpython@gmail.com>
 Source: https://github.com/crapher/pyhomebroker
 Purpose: Get history daily data from HomeBroker
 Require package: 

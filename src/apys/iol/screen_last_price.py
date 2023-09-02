@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Author: Fernando Corrales <corrales_fernando@hotmail.com>
+Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: Get screen's last price from IOL
 """
 
@@ -110,6 +110,9 @@ class ScreenLastPrice(SQLUtils):
             df['date_time'], format='%Y-%m-%dT%H:%M:%S'
         )
 
+        # Drop duplicated rows by symbol if any
+        df = df.drop_duplicates(subset=['symbol'])
+
         self.df = (df) 
         return self.df
 
@@ -195,12 +198,18 @@ def main():
             )
             sys.exit(msg)
 
+    print(args.instrument)
+    print(args.screen)
+
     test = ScreenLastPrice(
         iol = iol,
         instrument= args.instrument,
         screen=args.screen,
         country = args.country
     )
+    # df = test.df
+    # symbol = df['symbol']
+    # print(df[symbol.isin(symbol[symbol.duplicated()])])
     test.print_tibble()
     test.to_sql(dir_path + '/iol.sqlite')
 

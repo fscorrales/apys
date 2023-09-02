@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Author: Fernando Corrales <corrales_fernando@hotmail.com>
+Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: Get available screens from a country and 
 an instrument from IOL
 """
@@ -177,7 +177,7 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.iol.screens_country_instrument argentina Cauciones -j True
+    # python -m apys.iol.screens_country_instrument argentina Acciones -j True
 
     # A tidy dataframe: 6 X 1
     #              screen
