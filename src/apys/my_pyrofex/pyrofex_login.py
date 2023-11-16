@@ -74,6 +74,7 @@ class PyRofexLogin():
     def initialize(self):
         try:
             if self.live:
+                self.set_websocket()
                 pyRofex.initialize(
                     user=self.user,
                     password=self.password,
@@ -95,7 +96,7 @@ class PyRofexLogin():
 
     # 2-Defines the handlers that will process the messages and exceptions.
     # --------------------------------------------------
-    def market_data_handler(message):
+    def marketDataHandler(message):
         print("Market Data Message Received: {0}".format(message))
         # global prices, msg_date_time
 
@@ -138,17 +139,17 @@ class PyRofexLogin():
         #     prices.loc[message['instrumentId']['symbol'], 'Effective_volume'] = 0
 
     # --------------------------------------------------
-    def order_report_handler(self, message):
+    def orderReportHandler(self, message):
         print("Order Report Message Received: {0}".format(message))
     # --------------------------------------------------
-    def error_handler(self, message):
+    def errorHandler(self, message):
         # print(f"\n>>>>>>Error message received at {dt.datetime.now()}:")
         # pprint(message)
         # pyRofex.close_websocket_connection()
         # quit()
         print("Error Message Received: {0}".format(message))
     # --------------------------------------------------
-    def exception_handler(self, e):
+    def exceptionHandler(self, e):
         # print(f"\n>>>>>>Exception occurred at {dt.datetime.now()}:")
         # pprint(e.message)
         # pyRofex.close_websocket_connection()
@@ -157,12 +158,12 @@ class PyRofexLogin():
 
     # 3-Initiate Websocket Connection
     # --------------------------------------------------
-    def init_websocket_connection(self):
+    def initWebsocketConnection(self):
         pyRofex.init_websocket_connection(
-            market_data_handler=self.market_data_handler,
+            market_data_handler=self.marketDataHandler,
             # order_report_handler=self.order_report_handler,
-            error_handler=self.error_handler,
-            exception_handler=self.exception_handler
+            error_handler=self.errorHandler,
+            exception_handler=self.exceptionHandler
         )
 
     # 4-Subscribes to receive market data messages **

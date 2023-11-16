@@ -59,6 +59,17 @@ print(f'\npyRofex environment successfully initialized')
 
 instruments = pyRofex.get_detailed_instruments()['instruments']
 
+#Este proceso es para capturar el ticker de las letras del tesoro y vencimiento opciones
+#cficode:
+#'DYXTXR' = Letras del Tesoro 
+#'ESXXXX' 
+#'EMXXXX' 
+#'DBXXXX' 
+#'DBXXFR' 
+#'RPXXXX' 
+#'OCASPS' = Opciones Call
+#'OPASPS' = Opciones Put
+#'MRIXXX'
 letras_cficode = "DYXTXR"
 call_cficode = 'OCASPS'
 put_cficode = 'OPASPS'
@@ -83,6 +94,9 @@ vencimientos = list(dict.fromkeys(vencimientos))
 vencimientos.sort()
 vencimientos[:] = [x for x in vencimientos if x >= today_yearmonthday]
 
+#Fin del proceso
+
+#Capturar ticker de opciones
 for instrument in instruments:
     if instrument['cficode'] == call_cficode or instrument['cficode'] == put_cficode:
         if "Galicia" in instrument['underlying'] or "Comercial" in instrument['underlying'] or "YPF Merval" in instrument['underlying']:
@@ -126,6 +140,8 @@ if symbol_not_found == 1:
 else:
     print(f"\nAll instruments to be subscribed are in the API's instrument list\n")
 
+
+#Para armar el Google Sheet
 index_list = [item.replace('MERV - XMEV - ', '') for item in instruments_formatted]
 index_list = ['Ticker - Plazo'] + index_list
 index_list = [[el] for el in index_list]

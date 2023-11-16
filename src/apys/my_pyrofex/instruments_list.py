@@ -31,15 +31,32 @@ class InstrumentsList(PyRofexLogin, HandlingFiles):
     """
     details: bool = field(init=True, repr=False, default=False)
     ticker: str = field(init=True, repr=False, default='')
+    instruments: list = field(init=False, repr=False, default_factory=list)
+    letters: list = field(init=False, repr=False)
+    bonds: list = field(init=False, repr=False)
+    on: list = field(init=False, repr=False)
+    cedears: list = field(init=False, repr=False)
+    stocks: list = field(init=False, repr=False)
+    indexes: list = field(init=False, repr=False)
+    caucions: list = field(init=False, repr=False)
+    options: list = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
 
     def __post_init__(self):
+        self.letter_cficode  = 'DYXTXR'
+        self.bond_cficode  = 'DBXXXX'
+        self.on_cficode = 'DBXXFR'
+        self.cedear_cficode = 'EMXXXX'
+        self.stock_cficode = 'ESXXXX'
+        self.index_cficode = 'MRIXXX'
+        self.caucion_cficode = 'RPXXXX'
+        self.call_cficode  = 'OCASPS'
+        self.put_cficode  = 'OPASPS'
         self.copy_dependencies()
         self.initialize()
         self.get_data()
 
     def get_data(self):
-        
         if self.details:
             if self.ticker == '':
                 df = self.aux.get_detailed_instruments()
@@ -47,7 +64,106 @@ class InstrumentsList(PyRofexLogin, HandlingFiles):
                 df = self.aux.get_instrument_details(ticker=self.ticker)
         else:
             df = self.aux.get_all_instruments()
+        df = df['instruments']
         self.df = pd.DataFrame(df)
+
+    def setToday(self):
+        today = dt.date.today()
+        today_yearmonthday = today.strftime('%Y%m%d')
+        return today_yearmonthday
+    
+    def getInstruments(self):
+        self.instruments = self.aux.get_detailed_instruments()['instruments']
+        return self.instruments
+
+    def getLettersFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        letters = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.letter_cficode)
+        self.letters = sorted(list(set(letters)))
+        return self.letters
+    
+    def getBondsFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        bonds = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.bond_cficode)
+        self.bonds = sorted(list(set(bonds)))
+        return self.bonds
+    
+    def getONFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        on = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.on_cficode)
+        self.on = sorted(list(set(on)))
+        return self.on
+    
+    def getCedearsFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        cedears = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.cedear_cficode)
+        self.cedears = sorted(list(set(cedears)))
+        return self.cedears
+    
+    def getStocksFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        stocks = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.stock_cficode)
+        self.stocks = sorted(list(set(stocks)))
+        return self.stocks
+
+    def getIndexesFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        indexes = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.index_cficode)
+        self.indexes = sorted(list(set(indexes)))
+        return self.indexes
+
+    def getCaucionesFromInstruments(self):
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        cauciones = (instrument['securityDescription'].split(' - ')[2] 
+                   for instrument in self.instruments 
+                   if instrument['cficode'] == self.caucion_cficode)
+        self.cauciones = sorted(list(set(cauciones)))
+        return self.cauciones
+        
+    def getOptionsFromInstruments(self, 
+                                     underlying_keywords:list = ["Galicia", "Comercial", "YPF Merval"]) -> list:
+        if len(self.instruments) == 0:
+            self.getInstruments()
+        vencimientos = []
+        opciones = []
+
+        vencimientos = ([instrument['maturityDate'] 
+                         for instrument in self.instruments 
+                            if instrument['cficode'] == self.call_cficode 
+                            or instrument['cficode'] == self.put_cficode 
+                            and "Galicia" in instrument['underlying']])
+        vencimientos = list(set(vencimientos))
+        vencimientos.sort()
+        vencimientos = [x for x in vencimientos if x >= self.setToday()]
+
+        opciones = [instrument['securityDescription'].split(' - ')[2] 
+                    for instrument in self.instruments 
+                    if instrument['cficode'] in [self.call_cficode, self.put_cficode] 
+                    and any(keyword in instrument['underlying'] for keyword in underlying_keywords) 
+                    and instrument['maturityDate'] in vencimientos[:2]]
+
+        self.options = sorted(list(set(opciones)))
+        
+        return self.options
 
     def print_tibble(self):
         print(PrintTibble(self.df))
@@ -121,9 +237,6 @@ def main():
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                print(data_json['user'])
-                print(data_json['password'])
-                print(data_json['account'])
                 test = InstrumentsList(
                     user = data_json['user'], password = data_json['password'],
                     account = data_json['account'], live=args.live,
@@ -138,7 +251,8 @@ def main():
             )
             sys.exit(msg)
 
-    test.print_tibble()
+    # test.print_tibble()
+    print(test.getOptionsFromInstruments())
     if args.to_excel:
         test.to_excel(dir_path + '/instruments.xlsx')
 
@@ -146,4 +260,4 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.my_pyrofex.instruments_list
+    # python -m apys.my_pyrofex.instruments_list --live --details --to_excel

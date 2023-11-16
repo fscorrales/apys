@@ -35,6 +35,7 @@ class MarketData(PyRofexLogin, HandlingFiles):
 
     def __post_init__(self):
         self.copy_dependencies()
+        self.set_websocket()
         self.initialize()
         self.get_data()
 
