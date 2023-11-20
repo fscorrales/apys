@@ -15,7 +15,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 
-import openpyxl
+# import openpyxl
 import pandas as pd
 
 from ..utils.pydyverse import PrintTibble
@@ -25,10 +25,11 @@ from .pyrofex_login import PyRofexLogin
 
 # --------------------------------------------------
 @dataclass
-class InstrumentsList(PyRofexLogin, HandlingFiles):
+class InstrumentsList(HandlingFiles):
     """
     The code show how to work with instruments data using pyRofex
     """
+    pyrofex: PyRofexLogin
     details: bool = field(init=True, repr=False, default=False)
     ticker: str = field(init=True, repr=False, default='')
     instruments: list = field(init=False, repr=False, default_factory=list)
@@ -52,18 +53,18 @@ class InstrumentsList(PyRofexLogin, HandlingFiles):
         self.caucion_cficode = 'RPXXXX'
         self.call_cficode  = 'OCASPS'
         self.put_cficode  = 'OPASPS'
-        self.copy_dependencies()
-        self.initialize()
+        # self.copy_dependencies()
+        # self.initialize()
         self.get_data()
 
     def get_data(self):
         if self.details:
             if self.ticker == '':
-                df = self.aux.get_detailed_instruments()
+                df = self.pyrofex.aux.get_detailed_instruments()
             else:
-                df = self.aux.get_instrument_details(ticker=self.ticker)
+                df = self.pyrofex.aux.get_instrument_details(ticker=self.ticker)
         else:
-            df = self.aux.get_all_instruments()
+            df = self.pyrofex.aux.get_all_instruments()
         df = df['instruments']
         self.df = pd.DataFrame(df)
 
@@ -73,7 +74,7 @@ class InstrumentsList(PyRofexLogin, HandlingFiles):
         return today_yearmonthday
     
     def getInstruments(self):
-        self.instruments = self.aux.get_detailed_instruments()['instruments']
+        self.instruments = self.pyrofex.aux.get_detailed_instruments()['instruments']
         return self.instruments
 
     def getLettersFromInstruments(self):
@@ -228,19 +229,17 @@ def main():
         json_path = dir_path + '/remarkets.json'
 
     if args.user != '' and args.password != '' and args.dni != '' and args.account != '':
-        test = InstrumentsList(
+        pyrofex = PyRofexLogin(
             user = args.user, password = args.password,
-            account = args.account, live=args.live, 
-            details=args.details, ticker=args.ticker
+            account = args.account, live=args.live,
         )
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                test = InstrumentsList(
+                pyrofex = PyRofexLogin(
                     user = data_json['user'], password = data_json['password'],
                     account = data_json['account'], live=args.live,
-                    details=args.details, ticker=args.ticker
                 )
             json_file.close()
         else:
@@ -252,7 +251,12 @@ def main():
             sys.exit(msg)
 
     # test.print_tibble()
-    print(test.getOptionsFromInstruments())
+    test = InstrumentsList(
+        pyrofex=pyrofex,
+        details=args.details,
+        ticker=args.ticker
+    )
+    print(test.getLettersFromInstruments())
     if args.to_excel:
         test.to_excel(dir_path + '/instruments.xlsx')
 
@@ -260,4 +264,5 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
+    # python -m apys.my_pyrofex.instruments_list --live
     # python -m apys.my_pyrofex.instruments_list --live --details --to_excel
