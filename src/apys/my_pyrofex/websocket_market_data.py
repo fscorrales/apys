@@ -45,18 +45,17 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
         self.initWebsocketConnection()
         self.getData()
     
-    def getInstrumentsFormatted(self, tickers:list = []) -> list:
-        if len(tickers) > 0:
-            self.tickers = tickers
-        instruments_formatted = [
-            f'MERV - XMEV - {ticker} - CI' for ticker in self.tickers
-        ]
-        instruments_formatted.extend([
-            f'MERV - XMEV - {ticker} - 48hs' for ticker in self.tickers
-        ])
-        instruments_formatted.extend([
-            f'MERV - XMEV - {ticker} - 24hs' for ticker in self.tickers
-        ])
+    def getInstrumentsFormatted(self, instruments_formatted:list = None) -> list:
+        if instruments_formatted == None:
+            instruments_formatted = [
+                f'MERV - XMEV - {ticker} - CI' for ticker in self.tickers
+            ]
+            instruments_formatted.extend([
+                f'MERV - XMEV - {ticker} - 48hs' for ticker in self.tickers
+            ])
+            instruments_formatted.extend([
+                f'MERV - XMEV - {ticker} - 24hs' for ticker in self.tickers
+            ])
 
         instruments_raw = self.aux.get_all_instruments()['instruments']
         all_instruments = {
@@ -94,7 +93,7 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
     # 2-Defines the handlers that will process the messages and exceptions.
     # --------------------------------------------------
     def marketDataHandler(self, message):
-        print("Market Data Message Received: {0}".format(message))
+        # print("Market Data Message Received: {0}".format(message))
         # global prices, msg_date_time
 
         # print(f"Market data received for {message['instrumentId']['symbol'].replace('MERV - XMEV - ', '')} at "
