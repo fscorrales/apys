@@ -145,9 +145,9 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
         quit()
         # print("Error Message Received: {0}".format(message))
     # --------------------------------------------------
-    def exceptionHandler(self, e):
+    def exceptionHandler(self, message):
         print(f"\n>>>>>>Exception occurred at {dt.datetime.now()}:")
-        pprint(e.message)
+        pprint(message)
         pyRofex.close_websocket_connection()
         quit()
         # print("Exception Occurred: {0}".format(e.message))
