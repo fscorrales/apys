@@ -156,15 +156,35 @@ class PyRofexLogin():
         # quit()
         print("Exception Occurred: {0}".format(e.message))
 
-    # 3-Initiate Websocket Connection
+    # 3-Initiate and Close Websocket Connection
     # --------------------------------------------------
-    def initWebsocketConnection(self):
+    def initWebsocketConnection(
+            self,
+            market_data_handler=None,
+            order_report_handler=None,
+            error_handler=None,
+            exception_handler=None
+    ):
+        
+        if market_data_handler == None:
+            market_data_handler = self.marketDataHandler
+        if order_report_handler == None:
+            order_report_handler = self.orderReportHandler
+        if error_handler == None:
+            error_handler = self.errorHandler
+        if exception_handler == None:
+            exception_handler = self.exceptionHandler
+
         pyRofex.init_websocket_connection(
-            market_data_handler=self.marketDataHandler,
-            # order_report_handler=self.order_report_handler,
-            error_handler=self.errorHandler,
-            exception_handler=self.exceptionHandler
+            market_data_handler = market_data_handler,
+            order_report_handler = order_report_handler,
+            error_handler = error_handler,
+            exception_handler= exception_handler
         )
+    
+    # --------------------------------------------------
+    def closeWebsocketConnection(self):
+        pyRofex.close_websocket_connection()
 
     # 4-Subscribes to receive market data messages **
     # --------------------------------------------------

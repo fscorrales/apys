@@ -28,19 +28,20 @@ import pyRofex
 
 # --------------------------------------------------
 @dataclass
-class WebsocketMarketData(PyRofexLogin, HandlingFiles):
+class WebsocketMarketData(HandlingFiles):
     """
     The code show how to get different market data for an instrument and
     how to get historical trade data using pyRofex.
     """
+    pyrofex: PyRofexLogin
     tickers: list = None
     instruments_formatted: list = field(init=False, repr=False)
     prices: pd.DataFrame = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
 
     def __post_init__(self):
-        self.copy_dependencies()
-        self.initialize()
+        # self.copy_dependencies()
+        # self.initialize()
         self.getInstrumentsFormatted()
         self.initWebsocketConnection()
         self.getData()
@@ -57,7 +58,7 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
                 f'MERV - XMEV - {ticker} - 24hs' for ticker in self.tickers
             ])
 
-        instruments_raw = self.aux.get_all_instruments()['instruments']
+        instruments_raw = self.pyrofex.aux.get_all_instruments()['instruments']
         all_instruments = {
             instrument_dict['instrumentId']['symbol'] 
             for instrument_dict in instruments_raw 
@@ -141,21 +142,21 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
     def errorHandler(self, message):
         print(f"\n>>>>>>Error message received at {dt.datetime.now()}:")
         pprint(message)
-        pyRofex.close_websocket_connection()
+        self.pyrofex.closeWebsocketConnection()
         quit()
         # print("Error Message Received: {0}".format(message))
     # --------------------------------------------------
     def exceptionHandler(self, message):
         print(f"\n>>>>>>Exception occurred at {dt.datetime.now()}:")
         pprint(message)
-        pyRofex.close_websocket_connection()
+        self.pyrofex.closeWebsocketConnection()
         quit()
         # print("Exception Occurred: {0}".format(e.message))
 
     # 3-Initiate Websocket Connection
     # --------------------------------------------------
     def initWebsocketConnection(self):
-        pyRofex.init_websocket_connection(
+        self.pyrofex.initWebsocketConnection(
             market_data_handler=self.marketDataHandler,
             # order_report_handler=self.order_report_handler,
             error_handler=self.errorHandler,
@@ -170,16 +171,16 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
     def getData(self):
         
         entries = [
-            self.aux.MarketDataEntry.BIDS,
-            self.aux.MarketDataEntry.OFFERS,
-            self.aux.MarketDataEntry.LAST,
+            self.pyrofex.aux.MarketDataEntry.BIDS,
+            self.pyrofex.aux.MarketDataEntry.OFFERS,
+            self.pyrofex.aux.MarketDataEntry.LAST,
             # self.aux.MarketDataEntry.CLOSING_PRICE,
             # self.aux.MarketDataEntry.OPENING_PRICE,
             # self.aux.MarketDataEntry.HIGH_PRICE,
             # self.aux.MarketDataEntry.LOW_PRICE,
             # self.aux.MarketDataEntry.SETTLEMENT_PRICE,
-            self.aux.MarketDataEntry.NOMINAL_VOLUME,
-            self.aux.MarketDataEntry.TRADE_EFFECTIVE_VOLUME,
+            self.pyrofex.aux.MarketDataEntry.NOMINAL_VOLUME,
+            self.pyrofex.aux.MarketDataEntry.TRADE_EFFECTIVE_VOLUME,
             # self.aux.MarketDataEntry.TRADE_VOLUME,
             # self.aux.MarketDataEntry.OPEN_INTEREST
         ]
@@ -188,7 +189,7 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
         part_size = len(self.instruments_formatted) // num_parts
         parts = [self.instruments_formatted[i:i+part_size] for i in range(0, len(self.instruments_formatted), part_size)]
         for x in parts:
-            pyRofex.market_data_subscription(
+            self.pyrofex.market_data_subscription(
                 tickers=x,
                 entries=entries
             )
@@ -203,7 +204,8 @@ class WebsocketMarketData(PyRofexLogin, HandlingFiles):
             try:
                 # Panel.update('D1', msg_date_time)
                 # Panel.update('B2', [prices.columns.tolist()] + prices.values.tolist())
-                self.prices.to_excel('prices.xlsx')
+                self.df = self.prices
+                self.printTibble()
             except:
                 pass
             time.sleep(1)
@@ -281,16 +283,18 @@ def main():
         json_path = dir_path + '/remarkets.json'
 
     if args.user != '' and args.password != '' and args.dni != '' and args.account != '':
-        user = args.user
-        password = args.password
-        account = args.account    
+        pyrofex = PyRofexLogin(
+            user = args.user, password = args.password,
+            account = args.account, live=args.live,
+        )
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                user = data_json['user']
-                password = data_json['password']
-                account = data_json['account']   
+                pyrofex = PyRofexLogin(
+                    user = data_json['user'], password = data_json['password'],
+                    account = data_json['account'], live=args.live,
+                )
             json_file.close()
         else:
             msg = (
@@ -304,26 +308,24 @@ def main():
         # with open(os.path.join(dir_path, "Tickers.txt"), "r") as file:
         #     tickers_list = file.read().splitlines()
         tickers_list = InstrumentsList(
-            user = user, password = password,
-            account = account, live=args.live
+            pyrofex=pyrofex,
         ).getCedearsFromInstruments()
     else:
         tickers_list = args.tickers
 
     test = WebsocketMarketData(
-        user = user, password = password,
-        account = account, live=args.live,
+        pyrofex=pyrofex,
         tickers=tickers_list
     )
 
     # test.forTestOnly()
 
-    if args.to_excel:
-        test.to_excel(dir_path + '/websocket_market_data.xlsx')
+    # if args.to_excel:
+    #     test.to_excel(dir_path + '/websocket_market_data.xlsx')
 
 # --------------------------------------------------
 if __name__ == '__main__':
     main()
     # From apys.src
     # python -m apys.my_pyrofex.websocket_market_data --live
-    # python -m apys.my_pyrofex.websocket_market_data --live -t 'GGAL'
+    # python -m apys.my_pyrofex.websocket_market_data --live --to_excel -t 'GGAL'
