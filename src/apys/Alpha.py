@@ -1,3 +1,10 @@
+'''
+At Alpha Vantage, the majority of our API endpoints can be accessed for free. 
+For use cases that exceed our standard API usage limit (25 API requests per day) 
+or require certain premium API functions, we offer a premium plan to scale your 
+use cases
+'''
+
 # %%
 import json
 import io
