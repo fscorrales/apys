@@ -2,7 +2,7 @@
 """
 Author: Fernando Corrales <fscpython@gmail.com>
 Source: https://finnhub.io/docs/api/websocket-trades
-Purpose: Get market data using Finnhud websocket API.
+Purpose: Get market data using Finnhub websocket API.
 Require package: 
 """
 
@@ -32,90 +32,73 @@ class WebsocketMarketData(HandlingFiles):
     """
     api_key: str
     tickers: list = None
-    instruments_formatted: list = field(init=False, repr=False)
+    ws: websocket = field(init=False, repr=False)
     prices: pd.DataFrame = field(init=False, repr=False)
     df: pd.DataFrame = field(init=False, repr=False)
 
     def __post_init__(self):
-        websocket.enableTrace(True)
-        ws = websocket.WebSocketApp("wss://ws.finnhub.io?token=",
-                                on_message = self.on_message,
-                                on_error = self.on_error,
-                                on_close = self.on_close)
-        ws.on_open = self.on_open
-        ws.run_forever()
-
-        # self.copy_dependencies()
-        # self.initialize()
-        # self.getInstrumentsFormatted()
-        # self.initWebsocketConnection()
+        self.initialize()
         # self.getData()
 
-    def on_message(self, ws, message):
-        print(message)
-
-    def on_error(self, ws, error):
-        print(error)
-
-    def on_close(self, ws):
-        print("### closed ###")
-
-    def on_open(self, ws):
-        ws.send('{"type":"subscribe","symbol":"AAPL"}')
-        ws.send('{"type":"subscribe","symbol":"AMZN"}')
-        ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
-        ws.send('{"type":"subscribe","symbol":"IC MARKETS:1"}')
-
-
-
-    
-    def getInstrumentsFormatted(self, instruments_formatted:list = None) -> list:
-        if instruments_formatted == None:
-            instruments_formatted = [
-                f'MERV - XMEV - {ticker} - CI' for ticker in self.tickers
-            ]
-            instruments_formatted.extend([
-                f'MERV - XMEV - {ticker} - 48hs' for ticker in self.tickers
-            ])
-            instruments_formatted.extend([
-                f'MERV - XMEV - {ticker} - 24hs' for ticker in self.tickers
-            ])
-
-        instruments_raw = self.pyrofex.aux.get_all_instruments()['instruments']
-        all_instruments = {
-            instrument_dict['instrumentId']['symbol'] 
-            for instrument_dict in instruments_raw 
-            if instrument_dict['instrumentId']['symbol'].split(' - ')[0] == 'MERV'
-        }
-
-        instruments_to_be_removed = [
-            instrument 
-            for instrument in instruments_formatted 
-            if instrument not in all_instruments
-        ]
-
-        if instruments_to_be_removed:
-            print("Instruments not found in the API's instrument list:")
-            for instrument in instruments_to_be_removed:
-                print(instrument)
-                instruments_formatted.remove(instrument)
-        else:
-            print("\nAll instruments to be subscribed are in the API's instrument list\n")
-
+    def initialize(self):
+        websocket.enableTrace(True)
+        self.ws = websocket.WebSocketApp(
+            "wss://ws.finnhub.io?token=" + self.api_key,
+            on_message = self.on_message,
+            on_error = self.on_error,
+            on_close = self.on_close
+        )
         self.prices = pd.DataFrame(
             columns=[
-                "bid_size", "bid", "ask", "ask_size", "last", 
-                "last_size", 'nominal_volume', 'effective_volume'
+                "last_price", "time", "volume"
             ], 
-            index=instruments_formatted
+            index=self.tickers
         )
         self.prices = self.prices.fillna(0)
-        self.prices.index.name = "instrument"
-        self.instruments_formatted = instruments_formatted
-        return instruments_formatted
+        self.prices.index.name = "symbol"
 
-    # 2-Defines the handlers that will process the messages and exceptions.
-    # --------------------------------------------------
+    # def on_message(self, message):
+    #     try:
+    #         message_dict = json.loads(message)
+    #         print(type(message_dict['data']))
+    #         # Ahora puedes explorar la estructura del diccionario message_dict
+    #         for key, value in message_dict.items():
+    #             print(f"Clave: {key}, Valor: {value}")  
+    #     except json.JSONDecodeError:
+    #         print("El mensaje no sigue una estructura JSON")
+
+        # if message['data']:
+        #     self.marketDataHandler(message)
+        # print(message)
+
+    def on_message(self, message):
+        message_dict = json.loads(message)  # Convierte el mensaje en un diccionario
+        data_list = message_dict.get('data')  # Accede a la lista bajo la clave 'data'
+        # self.marketDataHandler(data_list)
+        if data_list:  # Verifica que 'data_list' no sea None
+            for data_dict in data_list:  # Itera a través de los diccionarios en la lista
+                # Accede a los valores dentro de cada diccionario
+                value1 = data_dict.get('s')
+                value2 = data_dict.get('p')
+                # Haz algo con los valores, por ejemplo, imprímelos
+                print(f"Valor de key1: {value1}, Valor de key2: {value2}")
+        else:
+            print("La clave 'data' no está presente en el mensaje")
+
+    def on_error(self, error):
+        print(error)
+
+    def on_close(self):
+        print("### closed ###")
+
+    def on_open(self):
+        for ticker in self.tickers:
+            self.ws.send(f'{{"type":"subscribe","symbol":"{ticker}"}}')
+        # self.ws.send('{"type":"subscribe","symbol":"AAPL"}')
+        # self.ws.send('{"type":"subscribe","symbol":"AMZN"}')
+        # self.ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
+        # self.ws.send('{"type":"subscribe","symbol":"IC MARKETS:1"}')
+
     def marketDataHandler(self, message):
         # print("Market Data Message Received: {0}".format(message))
         # global prices, msg_date_time
@@ -127,125 +110,44 @@ class WebsocketMarketData(HandlingFiles):
         # msg_date_time = msg_datetime.strftime("%m/%d/%Y %H:%M:%S")
         # msg_time_time = msg_datetime.time()
 
-        if message['marketData']['LA']:
-            self.prices.loc[message['instrumentId']['symbol'], 'last'] = message['marketData']['LA']['price']
-            self.prices.loc[message['instrumentId']['symbol'], 'last_size'] = message['marketData']['LA']['size']
+        if message['data']['p']:
+            self.prices.loc[message['data']['s'], 'last_price'] = message['data']['s']['p']
         else:
-            self.prices.loc[message['instrumentId']['symbol'], 'last'] = 0
-            self.prices.loc[message['instrumentId']['symbol'], 'last_size'] = 0
+            self.prices.loc[message['data']['s'], 'last_price'] = 0
 
-        if message['marketData']['OF']:
-            self.prices.loc[message['instrumentId']['symbol'], 'ask'] = message['marketData']['OF'][0]['price']
-            self.prices.loc[message['instrumentId']['symbol'], 'ask_size'] = message['marketData']['OF'][0]['size']
+        if message['data']['v']:
+            self.prices.loc[message['data']['s'], 'volume'] = message['data']['s']['v']
         else:
-            self.prices.loc[message['instrumentId']['symbol'], 'ask'] = 0
-            self.prices.loc[message['instrumentId']['symbol'], 'ask_size'] = 0
+            self.prices.loc[message['data']['s'], 'volume'] = 0
 
-        if message['marketData']['BI']:
-            self.prices.loc[message['instrumentId']['symbol'], 'bid'] = message['marketData']['BI'][0]['price']
-            self.prices.loc[message['instrumentId']['symbol'], 'bid_size'] = message['marketData']['BI'][0]['size']
-        else:
-            self.prices.loc[message['instrumentId']['symbol'], 'bid'] = 0
-            self.prices.loc[message['instrumentId']['symbol'], 'bid_size'] = 0
+        # if message['marketData']['OF']:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'ask'] = message['marketData']['OF'][0]['price']
+        #     self.prices.loc[message['instrumentId']['symbol'], 'ask_size'] = message['marketData']['OF'][0]['size']
+        # else:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'ask'] = 0
+        #     self.prices.loc[message['instrumentId']['symbol'], 'ask_size'] = 0
 
-        if message['marketData']['NV']:
-            self.prices.loc[message['instrumentId']['symbol'], 'nominal_volume'] = message['marketData']['NV']
-        else:
-            self.prices.loc[message['instrumentId']['symbol'], 'nominal_volume'] = 0
+        # if message['marketData']['BI']:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'bid'] = message['marketData']['BI'][0]['price']
+        #     self.prices.loc[message['instrumentId']['symbol'], 'bid_size'] = message['marketData']['BI'][0]['size']
+        # else:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'bid'] = 0
+        #     self.prices.loc[message['instrumentId']['symbol'], 'bid_size'] = 0
 
-        if message['marketData']['EV']:
-            self.prices.loc[message['instrumentId']['symbol'], 'effective_volume'] = message['marketData']['EV']
-        else:
-            self.prices.loc[message['instrumentId']['symbol'], 'effective_volume'] = 0
+        # if message['marketData']['NV']:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'nominal_volume'] = message['marketData']['NV']
+        # else:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'nominal_volume'] = 0
 
-    # --------------------------------------------------
-    def orderReportHandler(self, message):
-        print("Order Report Message Received: {0}".format(message))
-    # --------------------------------------------------
-    def errorHandler(self, message):
-        print(f"\n>>>>>>Error message received at {dt.datetime.now()}:")
-        pprint(message)
-        self.pyrofex.closeWebsocketConnection()
-        quit()
-        # print("Error Message Received: {0}".format(message))
-    # --------------------------------------------------
-    def exceptionHandler(self, message):
-        print(f"\n>>>>>>Exception occurred at {dt.datetime.now()}:")
-        pprint(message)
-        self.pyrofex.closeWebsocketConnection()
-        quit()
-        # print("Exception Occurred: {0}".format(e.message))
-
-    # 3-Initiate Websocket Connection
-    # --------------------------------------------------
-    def initWebsocketConnection(self):
-        self.pyrofex.initWebsocketConnection(
-            market_data_handler=self.marketDataHandler,
-            # order_report_handler=self.order_report_handler,
-            error_handler=self.errorHandler,
-            exception_handler=self.exceptionHandler
-        )
-        print("Websocket connection successfully initialized for:")
-        index_list = [item.replace('MERV - XMEV - ', '') for item in self.instruments_formatted]
-        index_list = ['Ticker - Plazo'] + index_list
-        index_list = [[el] for el in index_list]
-        pprint(index_list)
+        # if message['marketData']['EV']:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'effective_volume'] = message['marketData']['EV']
+        # else:
+        #     self.prices.loc[message['instrumentId']['symbol'], 'effective_volume'] = 0
 
     def getData(self):
-        
-        entries = [
-            self.pyrofex.aux.MarketDataEntry.BIDS,
-            self.pyrofex.aux.MarketDataEntry.OFFERS,
-            self.pyrofex.aux.MarketDataEntry.LAST,
-            # self.aux.MarketDataEntry.CLOSING_PRICE,
-            # self.aux.MarketDataEntry.OPENING_PRICE,
-            # self.aux.MarketDataEntry.HIGH_PRICE,
-            # self.aux.MarketDataEntry.LOW_PRICE,
-            # self.aux.MarketDataEntry.SETTLEMENT_PRICE,
-            self.pyrofex.aux.MarketDataEntry.NOMINAL_VOLUME,
-            self.pyrofex.aux.MarketDataEntry.TRADE_EFFECTIVE_VOLUME,
-            # self.aux.MarketDataEntry.TRADE_VOLUME,
-            # self.aux.MarketDataEntry.OPEN_INTEREST
-        ]
-
-        num_parts = len(self.instruments_formatted) // 1000 + 1
-        part_size = len(self.instruments_formatted) // num_parts
-        parts = [self.instruments_formatted[i:i+part_size] for i in range(0, len(self.instruments_formatted), part_size)]
-        for x in parts:
-            self.pyrofex.market_data_subscription(
-                tickers=x,
-                entries=entries
-            )
-        # half_list = round(len(self.instruments_formatted)/2)
-        # for x in [self.instruments_formatted[:half_list], self.instruments_formatted[half_list:]]:
-        #     pyRofex.market_data_subscription(
-        #         tickers=x,
-        #         entries=entries
-        #     )
-        
-        while True:
-            try:
-                # Panel.update('D1', msg_date_time)
-                # Panel.update('B2', [prices.columns.tolist()] + prices.values.tolist())
-                self.df = self.prices
-                self.printTibble()
-            except:
-                pass
-            time.sleep(1)
-
-    def forTestOnly(self):
-        print(f"Número de Instrumentos: {len(self.instruments_formatted)}")
-        num_parts = len(self.instruments_formatted) // 1000 + 1
-        print(f"Número de Partes a dividir: {num_parts}")
-        part_size = len(self.instruments_formatted) // num_parts
-        print(f"Tamaño de cada parte: {part_size}")
-        parts = [self.instruments_formatted[i:i+part_size] for i in range(0, len(self.instruments_formatted), part_size)]
-        for x in parts:
-            print(x)
-        # half_list = round(len(self.instruments_formatted)/2)
-        # for x in [self.instruments_formatted[:half_list], self.instruments_formatted[half_list:]]:
-        #     print(x)
-
+        self.ws.on_open = self.on_open
+        self.ws.run_forever()
+    
     def printTibble(self):
         print(PrintTibble(self.df))
 
@@ -253,15 +155,8 @@ class WebsocketMarketData(HandlingFiles):
 def getArgs():
     """Get needed params from user input"""
     parser = argparse.ArgumentParser(
-        description = 'Log to pyRofex',
+        description = 'Log to Finnhub',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument(
-        '-u', '--user', 
-        metavar = 'User',
-        default = '',
-        type=str,
-        help = "User to log in pyRofex")
 
     parser.add_argument(
         '-p', '--password', 
@@ -270,16 +165,9 @@ def getArgs():
         type=str,
         help = "Password to log in pyRofex")
     
-    parser.add_argument(
-        '-a', '--account', 
-        metavar = 'account',
-        default = '',
-        type=str,
-        help = "Account to log in pyRofex")
-    
-    parser.add_argument('--live', action='store_true')
-    parser.add_argument('--no-live', dest='live', action='store_false')
-    parser.set_defaults(live=False)
+    # parser.add_argument('--live', action='store_true')
+    # parser.add_argument('--no-live', dest='live', action='store_false')
+    # parser.set_defaults(live=False)
 
     parser.add_argument(
         '-t', '--tickers',
@@ -300,46 +188,31 @@ def main():
     """Let's try it"""
     args = getArgs()
     dir_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-    if args.live:
-        json_path = dir_path + '/live.json'
-    else:
-        json_path = dir_path + '/remarkets.json'
+    json_path = dir_path + '/finnhub.json'
 
-    if args.user != '' and args.password != '' and args.dni != '' and args.account != '':
-        pyrofex = PyRofexLogin(
-            user = args.user, password = args.password,
-            account = args.account, live=args.live,
+    if args.password != '':
+        finnhub = WebsocketMarketData(
+            api_key = args.password,
+            tickers=args.tickers
         )
     else:
         if os.path.isfile(json_path):
             with open(json_path) as json_file:
                 data_json = json.load(json_file)
-                pyrofex = PyRofexLogin(
-                    user = data_json['user'], password = data_json['password'],
-                    account = data_json['account'], live=args.live,
+                finnhub = WebsocketMarketData(
+                    api_key = data_json['password'],
+                    tickers=args.tickers,
                 )
             json_file.close()
         else:
             msg = (
-                f'If {json_path} with username and password ' +
-                'as keys does not exist in the directory, ' + 
-                'both arguments must be given.'
+                f'If {json_path} password ' +
+                'as key does not exist in the directory, ' + 
+                'it must be given.'
             )
             sys.exit(msg)
 
-    if args.tickers == '':
-        # with open(os.path.join(dir_path, "Tickers.txt"), "r") as file:
-        #     tickers_list = file.read().splitlines()
-        tickers_list = InstrumentsList(
-            pyrofex=pyrofex,
-        ).getCedearsFromInstruments()
-    else:
-        tickers_list = args.tickers
-
-    test = WebsocketMarketData(
-        pyrofex=pyrofex,
-        tickers=tickers_list
-    )
+    finnhub.getData()
 
     # test.forTestOnly()
 
@@ -350,5 +223,5 @@ def main():
 if __name__ == '__main__':
     main()
     # From apys.src
-    # python -m apys.my_pyrofex.websocket_market_data --live
-    # python -m apys.my_pyrofex.websocket_market_data --live --to_excel -t 'GGAL'
+    # python -m apys.finnhub.websocket_market_data -t AAPL AMZN 'BINANCE:BTCUSDT' 'IC MARKETS:1'
+    # python -m apys.finnhub.websocket_market_data --to_excel -t 'AMZN'
