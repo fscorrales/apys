@@ -13,6 +13,9 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
+import threading
+import time
+import signal
 
 import pandas as pd
 
@@ -37,6 +40,14 @@ class WebsocketMarketData(HandlingFiles):
     def __post_init__(self):
         self.initialize()
         # self.getData()
+        # Registrar el manejador de señales
+    #     signal.signal(signal.SIGINT, self.signal_handler)
+    #     signal.signal(signal.SIGTERM, self.signal_handler)
+
+    # def signal_handler(self, sig, frame):
+    #     # Cerrar el websocket
+    #     self.ws.close()
+    #     sys.exit(0)
 
     def initialize(self):
         websocket.enableTrace(True)
@@ -46,6 +57,7 @@ class WebsocketMarketData(HandlingFiles):
             on_error = self.on_error,
             on_close = self.on_close
         )
+
         self.df = pd.DataFrame(
             columns=[
                 "last_price",  "datetime", "volume"
@@ -54,6 +66,11 @@ class WebsocketMarketData(HandlingFiles):
         )
         self.df = self.df.fillna(0)
         self.df.index.name = "symbol"
+
+    def startWebSocket(self):
+        # Create a thread and target it to the run_forever function, then start it.
+        self.ws_thread = threading.Thread(target=self.ws.run_forever)
+        self.ws_thread.start()
 
     def on_message(self, message):
         message_dict = json.loads(message)  # Convierte el mensaje en un diccionario
@@ -79,12 +96,17 @@ class WebsocketMarketData(HandlingFiles):
             self.df.loc[data_dict.get('s'), 'last_price']  = data_dict.get('p')
             self.df.loc[data_dict.get('s'), 'datetime']  = dt.datetime.utcfromtimestamp(data_dict.get('t') / 1000.0)
             self.df.loc[data_dict.get('s'), 'volume']  = data_dict.get('v')
-        if self.print_console:
-            self.printTibble()
+        # if self.print_console:
+        #     self.printTibble()
 
-    def getData(self):
+    def getData(self, seconds_to_update:int = 15):
         self.ws.on_open = self.on_open
-        self.ws.run_forever()
+        # self.ws.run_forever()
+        self.startWebSocket()
+        while True:
+            time.sleep(seconds_to_update)
+            if self.print_console:
+                self.printTibble()
     
     def printTibble(self, data = None):
         if data is None:
