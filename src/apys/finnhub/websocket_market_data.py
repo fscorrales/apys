@@ -15,7 +15,6 @@ import sys
 from dataclasses import dataclass, field
 import threading
 import time
-import signal
 
 import pandas as pd
 
