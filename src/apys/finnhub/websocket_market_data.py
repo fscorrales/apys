@@ -56,6 +56,7 @@ class WebsocketMarketData(HandlingFiles):
             on_error = self.on_error,
             on_close = self.on_close
         )
+        self.ws.on_open = self.on_open
 
         self.df = pd.DataFrame(
             columns=[
@@ -77,7 +78,8 @@ class WebsocketMarketData(HandlingFiles):
         if data_list:  # Verifica que 'data_list' no sea None
             self.marketDataHandler(data_list)
         else:
-            print("La clave 'data' no está presente en el mensaje")
+            if self.print_console:
+                print("La clave 'data' no está presente en el mensaje")
 
     def on_error(self, error):
         print(error)
@@ -99,7 +101,7 @@ class WebsocketMarketData(HandlingFiles):
         #     self.printTibble()
 
     def getData(self, seconds_to_update:int = 15):
-        self.ws.on_open = self.on_open
+        # self.ws.on_open = self.on_open
         # self.ws.run_forever()
         self.startWebSocket()
         while True:
